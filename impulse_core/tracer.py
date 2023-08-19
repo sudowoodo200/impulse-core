@@ -12,7 +12,7 @@ import asyncio
 import functools as ft, hashlib
 
 from impulse_core.logger import BaseAsyncLogger, LocalLogger, MongoLogger
-from impulse_core.schema import Trace
+from impulse_core.schema import Trace, EMPTY_TRACE_TEMPLATE
 
 ## ROADMAP ####################################################################
 
@@ -52,19 +52,35 @@ class ImpulseTraceNode:
             "trace_module": self.trace_module,
         }
 
-GLOBAL_ROOT = ImpulseTraceNode(
+IMPULSE_GLOBAL_ROOT = ImpulseTraceNode(
     name = inspect.currentframe().f_code.co_name,
     call_id = str(uuid.uuid4()),
     creation_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
-    trace_module = {
-        "tracer_id": "",
-        "tracer_metadata": {},
-        "trace_thread": "",
-        "trace_hook": "",
-        "trace_hook_metadata": {}
-    }
+    trace_module = None
 )
-IMPULSE_CURRENT_TRACE_ROOT: Optional[ImpulseTraceNode] = contextvars.ContextVar("IMPULSE_CURRENT_TRACE_ROOT", default=GLOBAL_ROOT)
+IMPULSE_CURRENT_TRACE_ROOT: Optional[ImpulseTraceNode] = contextvars.ContextVar("IMPULSE_CURRENT_TRACE_ROOT", default=IMPULSE_GLOBAL_ROOT)
+
+def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
+    """
+    Flush the global root.
+    """
+    assert IMPULSE_GLOBAL_ROOT is not None, "Global root context not found."
+    trace_output = EMPTY_TRACE_TEMPLATE.copy()
+    trace_output["function"] = {
+        "type": "Function",
+        "name": IMPULSE_GLOBAL_ROOT.name
+    }
+    trace_output["call_id"] = IMPULSE_GLOBAL_ROOT.call_id
+    trace_output["timestamps"]= {
+        "start": IMPULSE_GLOBAL_ROOT.creation_time,
+        "end": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    }
+    trace_output["stack_trace"], trace_output["trace_logs"] = IMPULSE_GLOBAL_ROOT.export()
+    trace_output["status"] = "success"
+    trace_output["output"] = None
+    trace_output["exception"] = None
+    trace_output.update(update)
+    logger.log(payload=trace_output, metadata={"source": "impulse_tracer_global_root"})
 
 @contextmanager
 def impulse_trace_context(new_root = None):
@@ -331,7 +347,8 @@ class ImpulseTracer:
                 return "No logging representation available."
 
     def _throw_error_write_log(self, e: Exception,
-                     trace_output: Dict[str, Any] = None):
+                     trace_output: Dict[str, Any] = None,
+                     flush_global_root: bool = True) -> None:
         """
         Throw an error.
         """
@@ -339,6 +356,10 @@ class ImpulseTracer:
         trace_output["exception"] = f"{e}"
         trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
         self._write(payload=trace_output)
+
+        if flush_global_root:
+            _flush_global_root(self.logger, update = {"status": "error", "exception": f"{e}"})
+
         raise e
 
     def _write(self, payload: Dict[str, Any]):
@@ -352,10 +373,13 @@ class ImpulseTracer:
 
         self.logger.log(payload=payload, metadata={"source": "impulse_tracer"})
 
-    def shutdown(self):
+    def shutdown(self, flush_global_root: bool = True) -> None:
         """
         Shutdown the tracer.
         """
+        if flush_global_root:
+            _flush_global_root(self.logger)
+
         self.logger.shutdown()
         
 

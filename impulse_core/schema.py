@@ -27,7 +27,7 @@ class FunctionArguments(BaseModel):
 class Node(BaseModel):
     fn_name: str
     call_id: str
-    trace_module: TraceModule
+    trace_module: Optional[TraceModule]
 
 class StackTrace(BaseModel):
     parents: List[Node]
@@ -50,7 +50,7 @@ class Trace(BaseModel):
     trace_logs: Optional[List[TraceLog]]
 
 
-EMPTY_TRACE_EMPLATE = {
+EMPTY_TRACE_TEMPLATE = {
     "function": {
         "type": "",
         "name": "",
