@@ -22,6 +22,7 @@ class ImpulseTraceNode:
     name: str
     call_id: str
     trace_module: Dict[str, Any]
+    creation_time: datetime = datetime.now()
     parents: List[ImpulseTraceNode] = field(default_factory=list)
     children: List[ImpulseTraceNode] = field(default_factory=list)
     trace_logs: List[Dict[str, Any]] = field(default_factory=list)
@@ -54,6 +55,7 @@ class ImpulseTraceNode:
 GLOBAL_ROOT = ImpulseTraceNode(
     name = inspect.currentframe().f_code.co_name,
     call_id = str(uuid.uuid4()),
+    creation_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
     trace_module = {
         "tracer_id": "",
         "tracer_metadata": {},
@@ -164,6 +166,7 @@ class ImpulseTracer:
                 new_root = ImpulseTraceNode(
                     name = f_name,
                     call_id = trace_output["call_id"],
+                    creation_time=trace_output["timestamps"]["start"],
                     trace_module = trace_output["trace_module"]
                 )
                 return new_root
@@ -250,6 +253,7 @@ class ImpulseTracer:
                   field_name: str, 
                   past_times: Optional[Dict[str,str]] = {}, 
                   delta_to: Optional[str] = None) -> Dict[str, Any]:
+        
         now: datetime = datetime.now()
         output = {"timestamps": {
             **past_times,
