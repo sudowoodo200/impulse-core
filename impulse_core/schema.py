@@ -50,7 +50,7 @@ class Trace(BaseModel):
     trace_logs: Optional[List[TraceLog]]
 
 
-EMPTY_TEMPLATE = {
+EMPTY_TRACE_EMPLATE = {
     "function": {
         "type": "",
         "name": "",
@@ -71,43 +71,17 @@ EMPTY_TEMPLATE = {
         "end": "",
     },
     "arguments": {
-        "args": {
-            "self": "TestClass(x=1, y=2)",
-            "n": 5
-        },
+        "args": {},
         "kwargs": {},
-        "instance_attr": {
-            "x": 1
-        }
+        "instance_attr": {}
     },
-    "status": "success",
-    "output": "13579",
+    "status": "",
+    "output": "",
     "stack_trace": {
         "parents": [],
         "children": []
     },
-    "trace_logs": [
-        {
-            "timestamp": "2023-08-18 20:11:11.409790",
-            "payload": "Counting 0"
-        },
-        {
-            "timestamp": "2023-08-18 20:11:11.409813",
-            "payload": "Counting 1"
-        },
-        {
-            "timestamp": "2023-08-18 20:11:11.409818",
-            "payload": "Counting 2"
-        },
-        {
-            "timestamp": "2023-08-18 20:11:11.409823",
-            "payload": "Counting 3"
-        },
-        {
-            "timestamp": "2023-08-18 20:11:11.409829",
-            "payload": "Counting 4"
-        }
-    ]
+    "trace_logs": []
 }
 
 

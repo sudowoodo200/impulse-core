@@ -107,7 +107,6 @@ class ImpulseTracer:
     def hook(self,
             thread_name: str = "impulse_default_thread", 
             hook_name: Optional[str] = None,
-            log_target: str = "impulse_default_log",
             incld_instance_attr: List[str] = None,
             hook_metadata: Dict[str, Any] = {},
             is_method: bool = False,
@@ -176,7 +175,7 @@ class ImpulseTracer:
                 trace_output["output"] = self._parse_item(output)
                 trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
                 trace_output["stack_trace"], trace_output["trace_logs"] = new_root.export() 
-                self._write(payload=trace_output, log_target=log_target)
+                self._write(payload=trace_output)
 
             @ft.wraps(func)
             async def coro_wrapper(*args, **kwargs):
@@ -192,7 +191,7 @@ class ImpulseTracer:
 
                 except Exception as e:
                     trace_output["output"] = None
-                    self._throw_error_write_log(e, trace_output, log_target)
+                    self._throw_error_write_log(e, trace_output)
 
                 return output
             
@@ -214,7 +213,7 @@ class ImpulseTracer:
 
                 except Exception as e:
                     trace_output["output"] = output
-                    self._throw_error_write_log(e, trace_output, log_target)
+                    self._throw_error_write_log(e, trace_output)
 
             @ft.wraps(func)
             def wrapper(*args, **kwargs):
@@ -230,7 +229,7 @@ class ImpulseTracer:
                     
                 except Exception as e:
                     trace_output["output"] = None
-                    self._throw_error_write_log(e, trace_output, log_target)
+                    self._throw_error_write_log(e, trace_output)
 
                 return output
 
@@ -332,18 +331,17 @@ class ImpulseTracer:
                 return "No logging representation available."
 
     def _throw_error_write_log(self, e: Exception,
-                     trace_output: Dict[str, Any] = None, 
-                     log_target: str = None):
+                     trace_output: Dict[str, Any] = None):
         """
         Throw an error.
         """
         trace_output["status"] = "error"
         trace_output["exception"] = f"{e}"
         trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
-        self._write(payload=trace_output, log_target=log_target)
+        self._write(payload=trace_output)
         raise e
 
-    def _write(self, payload: Dict[str, Any], log_target: str = None):
+    def _write(self, payload: Dict[str, Any]):
         """
         Validate and write the payload to the logger.
         """
@@ -352,11 +350,11 @@ class ImpulseTracer:
         except Exception as e:
             print(f"[TRACE WARNING]: Payload does not conform to Trace schema: {e}")
 
-        self.logger.log(payload=payload, log_target=log_target, metadata={"source": "impulse_tracer"})
+        self.logger.log(payload=payload, metadata={"source": "impulse_tracer"})
 
     def shutdown(self):
         """
-        Flush the Global_Root Trace and shutdown the logger.
+        Shutdown the tracer.
         """
         self.logger.shutdown()
         
@@ -365,8 +363,8 @@ class ImpulseTracer:
 ### Dev ###############################################################
 if __name__ == "__main__":
 
-    local_logger = MongoLogger()
-    tests_tracer = ImpulseTracer(logger=local_logger, metadata={"tracing_context": "unit_test"})
+    logger = LocalLogger()
+    tests_tracer = ImpulseTracer(logger=logger, metadata={"tracing_context": "unit_test"})
 
     @dataclass
     class TestClass:

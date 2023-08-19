@@ -83,47 +83,38 @@ class BaseAsyncLogger:
 LOCAL_ENTRY_SEP ="\n"
 @dataclass
 class LocalLogger(BaseAsyncLogger):
-    uri: str = "./logs/"
-    log_targets: Dict[str, str] = field(default_factory=dict)
+    uri: str = "./.impulse_logs/"
+    filename: str = "logs_{timestamp}.json"
     entry_sep: str = LOCAL_ENTRY_SEP
     num_threads: int = 1 # dumb way to ensure no file contention
+
+    def __post_init__(self):
+        super().__post_init__()
+        self.filename = self.filename.format(
+            timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        )
+        self.filename = os.path.join(self.uri, self.filename)
+        if not os.path.exists(self.uri):
+            os.makedirs(self.uri)
+        if not os.path.exists(self.filename):
+            with open(self.filename, "w") as f:
+                f.write("")
 
     def _write(self, 
                payload: Union[str,Dict[str, Any]], 
                metadata: Optional[Dict[str, Any]] = None,
-               log_target: str = str(uuid.uuid4())[:8],
-               tag: str = "logs",
                *args, **kwargs):
-        
-        if not os.path.exists(self.uri):
-            os.makedirs(self.uri)
 
         data = {
             "payload": payload,
             "log_metadata": metadata,
-            "log_target": log_target
         }
-
-        if log_target not in self.log_targets:
-            
-            now = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            filename = f"{now}_{log_target}_{tag}.json"
-            with open(os.path.join(self.uri, filename), "w") as f:
-                f.write(json.dumps(data))
-            
-            self.log_targets[log_target] = filename
-
-        else:
-            
-            filename = self.log_targets[log_target]
-            with open(os.path.join(self.uri, filename), "a+") as f:
-                f.write(self.entry_sep + json.dumps(data))
+        with open(self.filename, "a+") as f:
+            f.write(self.entry_sep + json.dumps(data))
     
     def log(self, 
             payload: Union[str, Dict[str, Any], asyncio.Queue], 
             metadata: Optional[Dict[str, Any]] = None, 
-            log_target: str = str(uuid.uuid4())[:8],
-            tag: str = "logs",
             *args, **kwargs) -> None:
         """
         Write a file to a directory as a JSON.
@@ -132,7 +123,7 @@ class LocalLogger(BaseAsyncLogger):
         request_id: str            - the request ID; all logs with the same request ID will be written to the same file
         tag: str                   - a tag to be appended to the filename
         """
-        super().log(payload, metadata = metadata, log_target = log_target, tag = tag)
+        super().log(payload, metadata = metadata)
 
 
 import pymongo as pm
@@ -149,7 +140,6 @@ class MongoLogger(BaseAsyncLogger):
     credentials: str = field(default_factory=dict)
     db_name: str = "impulse_logs"
     collection_name: str = "logs"
-    log_targets: Dict[str, str] = field(default_factory=dict)
 
     def __post_init__(self):
         super().__post_init__()
@@ -180,13 +170,11 @@ class MongoLogger(BaseAsyncLogger):
     def _write(self, 
                payload: Union[str, Dict[str, Any]], 
                metadata: Optional[Dict[str, Any]],
-               log_target: str = str(uuid.uuid4())[:8],
                *args, **kwargs):
         
         data = {
             "payload": payload,
             "log_metadata": metadata,
-            "log_target": log_target
         }
 
         self._collection.insert_one(data)
@@ -200,8 +188,8 @@ def main():
     logger = MongoLogger()
 
     print(f"{datetime.now().strftime('%H:%M:%S')} Logging...")
-    logger.log(payload={"test": "test"}, metadata={"user": "testuser"}, log_target="test")
-    logger.log(payload="another test", metadata={"user": "testuser"}, log_target="test")
+    logger.log(payload={"test": "test"}, metadata={"user": "testuser"}, logid="test")
+    logger.log(payload="another test", metadata={"user": "testuser"}, logid="test")
     print(f"{datetime.now().strftime('%H:%M:%S')} Next...")
 
     async def stream_in( log_stream: queue.Queue, name = "1"):
@@ -223,10 +211,10 @@ def main():
         asyncio.set_event_loop(loop)
 
     buffering_queue_1 = queue.Queue()
-    logger.log(buffering_queue_1, metadata={"user": "teststream"}, log_target="test")
+    logger.log(buffering_queue_1, metadata={"user": "teststream"}, logfile="test")
 
     buffering_queue_2 = queue.Queue()
-    logger.log(buffering_queue_2, metadata={"user": "teststream"}, log_target="test")
+    logger.log(buffering_queue_2, metadata={"user": "teststream"}, logfile="test")
 
     task_1 = loop.create_task(stream_in(buffering_queue_1, name = "1"))
     print(f"{datetime.now().strftime('%H:%M:%S')} Streaming task 1 started.")
