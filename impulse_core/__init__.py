@@ -1,6 +1,6 @@
-from logger import BaseAsyncLogger, MongoLogger, LocalLogger
-from tracer import ImpulseTraceNode, ImpulseTracer, IMPULSE_CURRENT_TRACE_ROOT, trace_log
-from schema import (
+from impulse_core.logger import BaseAsyncLogger, MongoLogger, LocalLogger
+from impulse_core.tracer import ImpulseTraceNode, ImpulseTracer, IMPULSE_CURRENT_TRACE_ROOT, trace_log
+from impulse_core.schema import (
     TraceSchema,
     FunctionArgumentsSchema,
     ContextNodeSchema,
