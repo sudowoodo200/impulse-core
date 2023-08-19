@@ -2,52 +2,52 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Union, Optional
 from datetime import datetime
 
-class TracedFunction(BaseModel):
+class TracedFunctionSchema(BaseModel):
     type: str
     name: str
     args: List[str]
 
-class TraceModule(BaseModel):
+class TraceModuleSchema(BaseModel):
     tracer_id: str
     tracer_metadata: Dict[str, Any]
     trace_thread: str
     trace_hook: str
     trace_hook_metadata: Dict[str, Any]
 
-class FunctionTimestamps(BaseModel):
+class FunctionTimestampsSchema(BaseModel):
     start: datetime
     end: datetime
     start_to_end_seconds: Optional[float]
 
-class FunctionArguments(BaseModel):
+class FunctionArgumentsSchema(BaseModel):
     args: Dict[str, Any]
     kwargs: Dict[str, Any]
     instance_attr: Optional[Dict[str, Any]]
 
-class Node(BaseModel):
+class ContextNodeSchema(BaseModel):
     fn_name: str
     call_id: str
-    trace_module: Optional[TraceModule]
+    trace_module: Optional[TraceModuleSchema]
 
-class StackTrace(BaseModel):
-    parents: List[Node]
-    children: List[Node] 
+class StackTraceSchema(BaseModel):
+    parents: List[ContextNodeSchema]
+    children: List[ContextNodeSchema] 
 
-class TraceLog(BaseModel):
+class TraceLogSchema(BaseModel):
     timestamp: datetime
     payload: Union[str, Dict[str, Any]]
 
-class Trace(BaseModel):
-    function: TracedFunction
-    trace_module: TraceModule
+class TraceSchema(BaseModel):
+    function: TracedFunctionSchema
+    trace_module: TraceModuleSchema
     call_id: str
-    timestamps: FunctionTimestamps
-    arguments: FunctionArguments
+    timestamps: FunctionTimestampsSchema
+    arguments: FunctionArgumentsSchema
     status: str
     exception: Optional[str]
     output: Optional[Any]
-    stack_trace: Optional[StackTrace]
-    trace_logs: Optional[List[TraceLog]]
+    stack_trace: Optional[StackTraceSchema]
+    trace_logs: Optional[List[TraceLogSchema]]
 
 
 EMPTY_TRACE_TEMPLATE = {

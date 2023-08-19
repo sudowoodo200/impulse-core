@@ -12,7 +12,7 @@ import asyncio
 import functools as ft, hashlib
 
 from impulse_core.logger import BaseAsyncLogger, LocalLogger, MongoLogger
-from impulse_core.schema import Trace, EMPTY_TRACE_TEMPLATE
+from impulse_core.schema import TraceSchema, EMPTY_TRACE_TEMPLATE
 
 ## ROADMAP ####################################################################
 
@@ -367,7 +367,7 @@ class ImpulseTracer:
         Validate and write the payload to the logger.
         """
         try:
-            Trace(**payload)
+            TraceSchema(**payload)
         except Exception as e:
             print(f"[TRACE WARNING]: Payload does not conform to Trace schema: {e}")
 
