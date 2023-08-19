@@ -11,8 +11,8 @@ from enum import Enum
 import asyncio
 import functools as ft, hashlib
 
-from impulse.logger import BaseAsyncLogger, LocalLogger, MongoLogger
-from impulse.schema import Trace
+from impulse_core.logger import BaseAsyncLogger, LocalLogger, MongoLogger
+from impulse_core.schema import Trace
 
 ## ROADMAP ####################################################################
 

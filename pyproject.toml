@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "impulse"
+name = "impulse_core"
 version = "0.1.0"
 description = ""
 authors = ["sudowoodo200 <lin.sen200@gmail.com>"]
