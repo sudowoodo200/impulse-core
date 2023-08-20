@@ -90,9 +90,13 @@ def impulse_trace_context(new_root = None):
     old_root = IMPULSE_CURRENT_TRACE_ROOT.get()
     if old_root is not None:
         old_root.add_child(new_root)
+    print(f"Exiting {old_root.name} context. Entering {new_root.name}() context.")
     IMPULSE_CURRENT_TRACE_ROOT.set(new_root)
-    yield
-    IMPULSE_CURRENT_TRACE_ROOT.set(old_root)
+    try:
+        yield
+    finally:
+        print(f"Exiting {new_root.name} context. Entering {old_root.name}() context.")
+        IMPULSE_CURRENT_TRACE_ROOT.set(old_root)
 
 def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
     """
@@ -187,8 +191,6 @@ class ImpulseTracer:
                 return new_root
 
             def trace_complete(output: Any, new_root: ImpulseTraceNode) -> None:
-                trace_output["status"] = "success"
-                trace_output["output"] = self._parse_item(output)
                 trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
                 trace_output["stack_trace"], trace_output["trace_logs"] = new_root.export() 
                 self._write(payload=trace_output)
@@ -203,11 +205,16 @@ class ImpulseTracer:
                 try:
                     with impulse_trace_context(new_root):
                         output = await func(*args, **kwargs)
-                    trace_complete(output, new_root)
+                    
+                    trace_output["status"] = "success"
+                    trace_output["output"] = self._parse_item(output)
 
                 except Exception as e:
-                    trace_output["output"] = None
-                    self._throw_error_write_log(e, trace_output)
+                    trace_output["status"] = "error"
+                    self._handle_exception(e, trace_output)
+
+                finally:
+                    trace_complete(output, new_root)
 
                 return output
             
@@ -225,15 +232,19 @@ class ImpulseTracer:
                             yield chunk
                             output.append(chunk)
                     
-                    if len(output) > 0:
-                        if all([isinstance(output[i], str) for i in len(output)]):
-                            output = "".join(output)
+                    if all([isinstance(output[i], str) for i in range(len(output))]):
+                        output = "".join(output)
 
-                    trace_complete(output, new_root)
+                    trace_output["status"] = "success"
+                    trace_output["output"] = self._parse_item(output)
 
                 except Exception as e:
+                    trace_output["status"] = "error"
                     trace_output["output"] = output
-                    self._throw_error_write_log(e, trace_output)
+                    self._handle_exception(e, trace_output)
+                
+                finally:
+                    trace_complete(output, new_root)
 
             @ft.wraps(func)
             def wrapper(*args, **kwargs):
@@ -245,11 +256,16 @@ class ImpulseTracer:
                 try:
                     with impulse_trace_context(new_root):
                         output = func(*args, **kwargs)
-                    trace_complete(output, new_root)
+
+                    trace_output["status"] = "success"
+                    trace_output["output"] = self._parse_item(output)
                     
                 except Exception as e:
-                    trace_output["output"] = None
-                    self._throw_error_write_log(e, trace_output)
+                    trace_output["status"] = "error"
+                    self._handle_exception(e, trace_output)
+                
+                finally:
+                    trace_complete(output, new_root)
 
                 return output
 
@@ -349,13 +365,12 @@ class ImpulseTracer:
             except:
                 return "No logging representation available."
 
-    def _throw_error_write_log(self, e: Exception,
+    def _handle_exception(self, e: Exception,
                      trace_output: Dict[str, Any] = None,
                      flush_global_root: bool = True) -> None:
         """
         Throw an error.
         """
-        trace_output["status"] = "error"
         trace_output["exception"] = f"{e}"
         trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
         self._write(payload=trace_output)
@@ -402,12 +417,10 @@ if __name__ == "__main__":
         @tests_tracer.hook(thread_name="test")
         def nest_fn(cls, y, *args, **kwargs):
             z = 15
-            trace_log(f"Test function {y} output: {prod(1, 2, n=5)}")
 
         @tests_tracer.hook(thread_name="test", incld_instance_attr=["x"])
         async def count(self, n: int) -> AsyncGenerator[str, None]:
             for i in range(n):
-                trace_log(f"Counting {i}")
                 yield str(self.x + i * self.y)
         
         @tests_tracer.hook(thread_name="test")
@@ -432,15 +445,16 @@ if __name__ == "__main__":
         t = TestClass()
         async for i in t.count(5):
             pass
-        trace_log(await t.cprod(5))
+        await t.cprod(5)
 
         try:
             async for i in count(1, 2, n=5):
                 pass
         except Exception as e:
-            trace_log(e)
             pass
-        
+        finally:
+            pass
+
         x = 5
         t.nest_fn(x, 3, m=20)
 

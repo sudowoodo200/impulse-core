@@ -1,2 +1,81 @@
-
-{"payload": {"function": {"type": "Function", "name": "llm_respond", "args": ["input", "model", "temperature", "max_tokens"]}, "trace_module": {"tracer_id": "impulse_module_5a8f2194", "tracer_metadata": {"environment": "dev", "favorite_movie": "lotr"}, "trace_thread": "chatbot", "trace_hook": "openai", "trace_hook_metadata": {}}, "call_id": "4f35af74-ad62-4925-922f-52927aa464b1", "timestamps": {"start": "2023-08-19 22:53:15.939113", "end": "2023-08-19 22:53:16.510652", "start_to_end_seconds": "0.571539"}, "arguments": {"args": {"input": "Hello"}, "kwargs": {}}, "status": "success", "output": {"id": "chatcmpl-7pVfA7Utpl5SniAUQBDYoVQ8fRMRI", "object": "chat.completion", "created": 1692510796, "model": "gpt-3.5-turbo-0613", "choices": [{"index": 0, "message": {"role": "assistant", "content": "Hello! How can I assist you today?"}, "finish_reason": "stop"}], "usage": {"prompt_tokens": 20, "completion_tokens": 9, "total_tokens": 29}}, "stack_trace": {"parents": [{"fn_name": "llm_respond", "call_id": "0c97c60b-a4f7-4c84-9fd1-a4c2b5347854", "trace_module": {"tracer_id": "impulse_module_5a8f2194", "tracer_metadata": {"environment": "dev", "favorite_movie": "lotr"}, "trace_thread": "chatbot", "trace_hook": "openai", "trace_hook_metadata": {}}}], "children": []}, "trace_logs": []}, "log_metadata": {"source": "impulse_tracer"}}
+{
+    "payload": {
+        "function": {
+            "type": "Function",
+            "name": "llm_respond",
+            "args": [
+                "input",
+                "model",
+                "temperature",
+                "max_tokens"
+            ]
+        },
+        "trace_module": {
+            "tracer_id": "impulse_module_5a8f2194",
+            "tracer_metadata": {
+                "environment": "dev",
+                "favorite_movie": "lotr"
+            },
+            "trace_thread": "chatbot",
+            "trace_hook": "openai",
+            "trace_hook_metadata": {}
+        },
+        "call_id": "4f35af74-ad62-4925-922f-52927aa464b1",
+        "timestamps": {
+            "start": "2023-08-19 22:53:15.939113",
+            "end": "2023-08-19 22:53:16.510652",
+            "start_to_end_seconds": "0.571539"
+        },
+        "arguments": {
+            "args": {
+                "input": "Hello"
+            },
+            "kwargs": {}
+        },
+        "status": "success",
+        "output": {
+            "id": "chatcmpl-7pVfA7Utpl5SniAUQBDYoVQ8fRMRI",
+            "object": "chat.completion",
+            "created": 1692510796,
+            "model": "gpt-3.5-turbo-0613",
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": "Hello! How can I assist you today?"
+                    },
+                    "finish_reason": "stop"
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 20,
+                "completion_tokens": 9,
+                "total_tokens": 29
+            }
+        },
+        "stack_trace": {
+            "parents": [
+                {
+                    "fn_name": "llm_respond",
+                    "call_id": "0c97c60b-a4f7-4c84-9fd1-a4c2b5347854",
+                    "trace_module": {
+                        "tracer_id": "impulse_module_5a8f2194",
+                        "tracer_metadata": {
+                            "environment": "dev",
+                            "favorite_movie": "lotr"
+                        },
+                        "trace_thread": "chatbot",
+                        "trace_hook": "openai",
+                        "trace_hook_metadata": {}
+                    }
+                }
+            ],
+            "children": []
+        },
+        "trace_logs": []
+    },
+    "log_metadata": {
+        "source": "impulse_tracer"
+    }
+}
