@@ -110,7 +110,7 @@ class LocalLogger(BaseAsyncLogger):
             "log_metadata": metadata,
         }
         with open(self.filename, "a+") as f:
-            f.write(self.entry_sep + json.dumps(data))
+            f.write(self.entry_sep + json.dumps(data, indent = 4))
     
     def log(self, 
             payload: Union[str, Dict[str, Any], asyncio.Queue], 
@@ -163,9 +163,8 @@ class MongoLogger(BaseAsyncLogger):
             except Exception as e:
                 raise e
                 return False
-        
         else:
-            return False
+            raise Exception("Auth type not supported")
     
     def _write(self, 
                payload: Union[str, Dict[str, Any]], 

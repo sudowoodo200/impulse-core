@@ -28,7 +28,7 @@ class ImpulseTraceNode:
     trace_logs: List[Dict[str, Any]] = field(default_factory=list)
     diff_process: bool = False
 
-    def add_child(self, child_node):
+    def add_child(self, child_node: ImpulseTraceNode):
         self.children.append(child_node)
         child_node.parents.append(self)
 
@@ -65,22 +65,22 @@ def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
     Flush the global root.
     """
     assert IMPULSE_GLOBAL_ROOT is not None, "Global root context not found."
-    trace_output = EMPTY_TRACE_TEMPLATE.copy()
-    trace_output["function"] = {
+    output = EMPTY_TRACE_TEMPLATE.copy()
+    output["function"] = {
         "type": "Function",
         "name": IMPULSE_GLOBAL_ROOT.name
     }
-    trace_output["call_id"] = IMPULSE_GLOBAL_ROOT.call_id
-    trace_output["timestamps"]= {
+    output["call_id"] = IMPULSE_GLOBAL_ROOT.call_id
+    output["timestamps"]= {
         "start": IMPULSE_GLOBAL_ROOT.creation_time,
         "end": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
     }
-    trace_output["stack_trace"], trace_output["trace_logs"] = IMPULSE_GLOBAL_ROOT.export()
-    trace_output["status"] = "success"
-    trace_output["output"] = None
-    trace_output["exception"] = None
-    trace_output.update(update)
-    logger.log(payload=trace_output, metadata={"source": "impulse_tracer_global_root"})
+    output["stack_trace"], output["trace_logs"] = IMPULSE_GLOBAL_ROOT.export()
+    output["status"] = "success"
+    output["output"] = None
+    output["exception"] = None
+    output.update(update)
+    logger.log(payload=output, metadata={"source": "impulse_tracer_global_root"})
 
 @contextmanager
 def impulse_trace_context(new_root = None):
@@ -146,11 +146,11 @@ class ImpulseTracer:
 
             """
 
-            # Can't use inspect.ismethod() because it returns False before method is bound
-            # See https://stackoverflow.com/questions/11731136/class-method-decorator-with-self-arguments
-
             f_name: str = func.__qualname__
             f_args: List[str] = inspect.getfullargspec(func).args
+
+            # Can't use inspect.ismethod() because it returns False before method is bound
+            # See https://stackoverflow.com/questions/11731136/class-method-decorator-with-self-arguments
 
             IS_METHOD = f_args[0] == "self" or is_method # protected variable name
             IS_CLASSMETHOD = f_args[0] == "cls" or is_classmethod # protected variable name
@@ -215,16 +215,20 @@ class ImpulseTracer:
             async def agen_wrapper(*args, **kwargs):
                 """
                 Asynchronous generator wrapper.
-                - Only support string outputs for now
                 """
                 new_root = trace_init(*args, **kwargs)
 
                 try:
-                    output = ""
+                    output = []
                     with impulse_trace_context(new_root):
                         async for chunk in func(*args, **kwargs):
                             yield chunk
-                            output += chunk
+                            output.append(chunk)
+                    
+                    if len(output) > 0:
+                        if all([isinstance(output[i], str) for i in len(output)]):
+                            output = "".join(output)
+
                     trace_complete(output, new_root)
 
                 except Exception as e:
@@ -262,7 +266,6 @@ class ImpulseTracer:
         output = {}
         output["call_id"] = str(uuid.uuid4())
         return output
-
 
     def _get_time(self, 
                   field_name: str, 

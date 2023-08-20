@@ -17,17 +17,17 @@ class TraceModuleSchema(BaseModel):
 class FunctionTimestampsSchema(BaseModel):
     start: datetime
     end: datetime
-    start_to_end_seconds: Optional[float]
+    start_to_end_seconds: Optional[float] = None
 
 class FunctionArgumentsSchema(BaseModel):
     args: Dict[str, Any]
     kwargs: Dict[str, Any]
-    instance_attr: Optional[Dict[str, Any]]
+    instance_attr: Optional[Dict[str, Any]] = None
 
 class ContextNodeSchema(BaseModel):
     fn_name: str
     call_id: str
-    trace_module: Optional[TraceModuleSchema]
+    trace_module: Optional[TraceModuleSchema] = None
 
 class StackTraceSchema(BaseModel):
     parents: List[ContextNodeSchema]
@@ -44,10 +44,10 @@ class TraceSchema(BaseModel):
     timestamps: FunctionTimestampsSchema
     arguments: FunctionArgumentsSchema
     status: str
-    exception: Optional[str]
-    output: Optional[Any]
-    stack_trace: Optional[StackTraceSchema]
-    trace_logs: Optional[List[TraceLogSchema]]
+    exception: Optional[str] = None
+    output: Optional[Any] = None
+    stack_trace: Optional[StackTraceSchema] = None
+    trace_logs: Optional[List[TraceLogSchema]] = None
 
 
 EMPTY_TRACE_TEMPLATE = {
