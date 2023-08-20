@@ -2,7 +2,6 @@ from impulse_core.logger import BaseAsyncLogger, MongoLogger, LocalLogger
 from impulse_core.tracer import ImpulseTraceNode, ImpulseTracer, trace_log
 from impulse_core.schema import (
     TraceSchema,
-    FunctionArgumentsSchema,
     ContextNodeSchema,
     StackTraceSchema,
     TraceLogSchema,
@@ -20,7 +19,6 @@ __all__ = [
     "LocalLogger",
     "trace_log",
     "TraceSchema",
-    "FunctionArgumentsSchema",
     "ContextNodeSchema",
     "StackTraceSchema",
     "TraceLogSchema",

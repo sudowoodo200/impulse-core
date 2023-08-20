@@ -19,11 +19,6 @@ class FunctionTimestampsSchema(BaseModel):
     end: datetime
     start_to_end_seconds: Optional[float] = None
 
-class FunctionArgumentsSchema(BaseModel):
-    args: Dict[str, Any]
-    kwargs: Dict[str, Any]
-    instance_attr: Optional[Dict[str, Any]] = None
-
 class ContextNodeSchema(BaseModel):
     fn_name: str
     call_id: str
@@ -42,7 +37,7 @@ class TraceSchema(BaseModel):
     trace_module: TraceModuleSchema
     call_id: str
     timestamps: FunctionTimestampsSchema
-    arguments: FunctionArgumentsSchema
+    arguments: Optional[Dict[str, Any]]
     status: str
     exception: Optional[str] = None
     output: Optional[Any] = None

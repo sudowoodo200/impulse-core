@@ -95,6 +95,8 @@ class LocalLogger(BaseAsyncLogger):
         self.filename = self.filename.format(
             timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         )
+        if not os.path.exists(self.uri):
+            os.makedirs(self.uri)
         self.filename = os.path.join(self.uri, self.filename)
 
     def _write(self, 
@@ -102,32 +104,17 @@ class LocalLogger(BaseAsyncLogger):
                metadata: Optional[Dict[str, Any]] = None,
                *args, **kwargs):
 
-        data = {
-            "payload": payload,
-            "log_metadata": metadata,
-        }
+        data = json.dumps({
+                    "payload": payload,
+                    "log_metadata": metadata,
+                }, indent = 4)
 
-        if not os.path.exists(self.uri):
-            os.makedirs(self.uri)
         if not os.path.exists(self.filename):
             with open(self.filename, "w") as f:
-                f.write("")
-
-        with open(self.filename, "a+") as f:
-            f.write(self.entry_sep + json.dumps(data, indent = 4))
-    
-    def log(self, 
-            payload: Union[str, Dict[str, Any], asyncio.Queue], 
-            metadata: Optional[Dict[str, Any]] = None, 
-            *args, **kwargs) -> None:
-        """
-        Write a file to a directory as a JSON.
-        payload: Dict[str, Any]    - the data to be written
-        metadata: Dict[str, Any]   - the metadata to be written
-        request_id: str            - the request ID; all logs with the same request ID will be written to the same file
-        tag: str                   - a tag to be appended to the filename
-        """
-        super().log(payload, metadata = metadata)
+                f.write(data)
+        else:
+            with open(self.filename, "a+") as f:
+                f.write(data)
 
 
 @dataclass

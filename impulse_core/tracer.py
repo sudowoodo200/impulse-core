@@ -14,8 +14,6 @@ import functools as ft, hashlib
 from impulse_core.logger import BaseAsyncLogger, LocalLogger, MongoLogger
 from impulse_core.schema import TraceSchema, EMPTY_TRACE_TEMPLATE
 
-## ROADMAP ####################################################################
-
 @dataclass
 class ImpulseTraceNode:
     
@@ -116,6 +114,23 @@ def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
         print(f"[TRACE LOG] {curr_root.name}() @ {now} : {payload}")
 
 
+## Tracer #############################################################
+class ImpulseFnTypes(Enum):
+    FUNCTION = "Function"
+    METHOD = "Method"
+    CLASSMETHOD = "Classmethod"
+
+STANDARD_TYPES = (int, float, str, bool, list, dict, tuple, set, frozenset, type(None))
+
+def conform_output(obj: Any) -> Union[str,Dict[str, Any]]:
+    try:
+        if json.dumps(obj):
+            return obj
+    except:
+        try:
+            return str(obj)
+        except:
+            return "No logging representation available."
 
 @dataclass
 class ImpulseTracer:
@@ -156,12 +171,13 @@ class ImpulseTracer:
             # Can't use inspect.ismethod() because it returns False before method is bound
             # See https://stackoverflow.com/questions/11731136/class-method-decorator-with-self-arguments
 
+            FN_TYPE = ImpulseFnTypes.FUNCTION
             if len(f_args) > 0:
-                IS_METHOD = f_args[0] == "self" or is_method # protected variable name
-                IS_CLASSMETHOD = f_args[0] == "cls" or is_classmethod # protected variable name
-            else:
-                IS_METHOD = False
-                IS_CLASSMETHOD = False
+                if f_args[0] == "self" or is_method:
+                    FN_TYPE = ImpulseFnTypes.METHOD
+                elif f_args[0] == "cls" or is_classmethod :
+                    FN_TYPE = ImpulseFnTypes.CLASSMETHOD
+            
 
             IS_COROUTINE = inspect.iscoroutinefunction(func) 
             IS_ASYNCGEN = inspect.isasyncgenfunction(func) 
@@ -184,7 +200,7 @@ class ImpulseTracer:
                 trace_output.update({
                     **self._initialize_call(),
                     **self._get_time("start"),
-                    **self._process_inputs (args, kwargs, trace_output["function"]["args"], IS_METHOD or IS_CLASSMETHOD, incld_instance_attr)
+                    **self._process_inputs (inspect.signature(func), args, kwargs, FN_TYPE, incld_instance_attr)
                 })
                 new_root = ImpulseTraceNode(
                     name = f_name,
@@ -307,10 +323,10 @@ class ImpulseTracer:
         return output
 
     def _process_inputs(self,
-                        input_args: tuple, 
-                        input_kwargs: dict,
-                        input_args_names: List[str] = None,
-                        incld_attr:bool = False,
+                        sig: inspect.Signature,
+                        args: Tuple[Any],
+                        kwargs: Dict[str, Any],
+                        fn_type: ImpulseFnTypes,
                         incld_instance_attr: List[str] = None) -> Dict[str, Any]:
         """
         Process the arguments to be logged.
@@ -318,20 +334,10 @@ class ImpulseTracer:
          - If the function is a method, log the instance attributes.
         """
         output = {}
-        ## handle args and kwargs
-        arguments: dict = {
-            "args": { input_args_names[i] 
-                        if i < len(input_args_names) 
-                        else f"args[{i - len(input_args_names)}]" 
-                      : self._parse_item(arg) 
-                      for i, arg in enumerate(input_args) },
-
-            "kwargs": { k : self._parse_item(v) 
-                       for k, v in input_kwargs.items()}
-        }
-
-        if incld_attr:
-            arguments["instance_attr"] = self._process_attr(input_args[0], incld_instance_attr)
+        bound_args: inspect.BoundArguments = sig.bind(*args, **kwargs)
+        bound_args.apply_defaults()
+    
+        arguments = {k: self._parse_item(v) for k, v in bound_args.arguments.items()}
             
         output["arguments"] = arguments
 
@@ -351,7 +357,7 @@ class ImpulseTracer:
                                 if not callable(getattr(method_instance, attr)) 
                                 and not attr.startswith('__') ]
         return {
-            attr: self._parse_item(getattr(method_instance, attr)) 
+            attr: conform_output(getattr(method_instance, attr)) 
             for attr in incld_instance_attr
         }   
 
@@ -362,14 +368,22 @@ class ImpulseTracer:
          - If json.dumps() is successful, return the item as a dict.
          - If both fail, return "No logging representation available."
         """
-        try:
-            if json.dumps(item):
-                return item
-        except:
-            try:
-                return str(item)
-            except:
-                return "No logging representation available."
+
+        # TODO: Add support for att
+        if hasattr(item, '__class__') and not isinstance(item, STANDARD_TYPES):
+
+            is_instance: bool = (not inspect.isbuiltin(item)) and item.__class__.__name__ != "type"
+            if not is_instance:
+                assert inspect.isclass(item), "Item is not a class or instance."
+
+            return {
+                "type": "instance" if is_instance else "class",
+                "classname": item.__class__.__name__ if is_instance else item.__name__,
+                "attr": {k: conform_output(v) for k, v in self._process_attr(item).items()}
+            }
+        
+        else:
+            return conform_output(item)
 
     def _handle_exception(self, e: Exception,
                      trace_output: Dict[str, Any] = None) -> None:
@@ -389,8 +403,8 @@ class ImpulseTracer:
             TraceSchema(**payload)
         except Exception as e:
             print(f"[TRACE WARNING]: Payload does not conform to Trace schema: {e}")
-
-        self.logger.log(payload=payload, metadata={"source": "impulse_tracer"})
+        finally:
+            self.logger.log(payload=payload, metadata={"source": "impulse_tracer"})
 
     def shutdown(self, flush_global_root: bool = True) -> None:
         """
@@ -416,7 +430,7 @@ if __name__ == "__main__":
 
         @classmethod
         @tests_tracer.hook(thread_id="test")
-        def nest_fn(cls, y, *args, **kwargs):
+        def nest_fn(self, y, m, *args, **kwargs):
             z = 15
 
         @tests_tracer.hook(thread_id="test", incld_instance_attr=["x"])
@@ -461,7 +475,7 @@ if __name__ == "__main__":
 
     async def main():
 
-        # t = TestClass()
+        t = TestClass()
         # async for i in t.count(5):
         #     pass
         # await t.cprod(5)
@@ -474,11 +488,11 @@ if __name__ == "__main__":
         # finally:
         #     pass
 
-        # x = 5
-        # t.nest_fn(x, 3, m=20)
+        x = 5
+        t.nest_fn(x, 2, 4, p=5)
 
-        output = llm_respond("Hello", model = "lol")
-        print(output)
-
+        # output = llm_respond("Hello")
+        # print(output)
 
     asyncio.run(main())
+    #tests_tracer.shutdown()
