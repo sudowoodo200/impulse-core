@@ -1,2 +1,4 @@
 openai
 typing-extensions
+pandas
+matplotlib

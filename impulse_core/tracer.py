@@ -156,8 +156,12 @@ class ImpulseTracer:
             # Can't use inspect.ismethod() because it returns False before method is bound
             # See https://stackoverflow.com/questions/11731136/class-method-decorator-with-self-arguments
 
-            IS_METHOD = f_args[0] == "self" or is_method # protected variable name
-            IS_CLASSMETHOD = f_args[0] == "cls" or is_classmethod # protected variable name
+            if len(f_args) > 0:
+                IS_METHOD = f_args[0] == "self" or is_method # protected variable name
+                IS_CLASSMETHOD = f_args[0] == "cls" or is_classmethod # protected variable name
+            else:
+                IS_METHOD = False
+                IS_CLASSMETHOD = False
 
             IS_COROUTINE = inspect.iscoroutinefunction(func) 
             IS_ASYNCGEN = inspect.isasyncgenfunction(func) 

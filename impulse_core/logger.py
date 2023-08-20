@@ -178,6 +178,27 @@ class MongoLogger(BaseAsyncLogger):
 
         self._collection.insert_one(data)
 
+
+@dataclass
+class DummyLogger(BaseAsyncLogger):
+    uri: str = ""
+    io_time: float = 0.1
+    buffer: List[Dict[str, Any]] = field(default_factory = list)
+
+    def __post_init__(self):
+        super().__post_init__()
+
+    def _write(self, 
+               payload: Union[str,Dict[str, Any]], 
+               metadata: Optional[Dict[str, Any]] = None,
+               *args, **kwargs):
+
+        time.sleep(self.io_time)
+        self.buffer.append({
+            "payload": payload,
+            "log_metadata": metadata,
+        })
+
 ## Dev ###############################################################
 
 ## Unit Tests
