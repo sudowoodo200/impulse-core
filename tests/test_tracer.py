@@ -7,8 +7,8 @@ import pytest
 import os
 import json
 from pathlib import Path
-from impulse_trace.tracer import ImpulseTracer
-from impulse_trace.logger import LocalLogger
+from impulse_core.tracer import ImpulseTracer
+from impulse_core.logger import LocalLogger
 
 ## ROADMAP ####################################################################
 # TODO: Write tests for stack trace logging
@@ -49,9 +49,9 @@ def test_tracer_function(tracer, tracer_metadata):
 
     local_logger = tracer.logger
     log_target = "test"
-    thread_name = "test_fn"
+    thread_id = "test_fn"
 
-    @tracer.hook(thread_name = thread_name, log_target=log_target)
+    @tracer.hook(thread_id = thread_id, log_target=log_target)
     def test_fn(x: int, y: int, n: int) -> str:
         return str(x + n * y)
     
@@ -71,7 +71,7 @@ def test_tracer_function(tracer, tracer_metadata):
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_name,
+            "trace_thread": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_function.<locals>.test_fn"
@@ -98,14 +98,14 @@ def test_tracer_method(tracer, tracer_metadata):
 
     local_logger = tracer.logger
     log_target = "test"
-    thread_name = "test_method"
+    thread_id = "test_method"
 
     @dataclass
     class TestClass:
         x: int
         y: int
 
-        @tracer.hook(thread_name, log_target=log_target)
+        @tracer.hook(thread_id, log_target=log_target)
         def test_fn(self, n: int) -> str:
             return str(self.x + self.y *n)
     
@@ -126,7 +126,7 @@ def test_tracer_method(tracer, tracer_metadata):
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_name,
+            "trace_thread": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_method.<locals>.TestClass.test_fn"
@@ -155,7 +155,7 @@ def test_tracer_coroutine(tracer, tracer_metadata):
 
     local_logger = tracer.logger
     log_target = "test"
-    thread_name = "test_coro"
+    thread_id = "test_coro"
 
     try:
         loop = asyncio.get_running_loop()
@@ -163,7 +163,7 @@ def test_tracer_coroutine(tracer, tracer_metadata):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    @tracer.hook(thread_name, log_target=log_target)
+    @tracer.hook(thread_id, log_target=log_target)
     async def test_fn(x: int, y: int, n: int) -> str:
         return str(x + n * y)
     
@@ -184,7 +184,7 @@ def test_tracer_coroutine(tracer, tracer_metadata):
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_name,
+            "trace_thread": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_coroutine.<locals>.test_fn"
@@ -211,7 +211,7 @@ def test_tracer_agen(tracer, tracer_metadata):
 
     local_logger = tracer.logger
     log_target = "test"
-    thread_name = "test_agen"
+    thread_id = "test_agen"
 
     try:
         loop = asyncio.get_running_loop()
@@ -219,7 +219,7 @@ def test_tracer_agen(tracer, tracer_metadata):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    @tracer.hook(thread_name, log_target=log_target)
+    @tracer.hook(thread_id, log_target=log_target)
     async def test_fn(x: int, y: int, n: int) -> AsyncGenerator[str, None]:
         for i in range(n):
             yield str(x + i * y)
@@ -247,7 +247,7 @@ def test_tracer_agen(tracer, tracer_metadata):
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_name,
+            "trace_thread": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_agen.<locals>.test_fn"
@@ -274,11 +274,11 @@ def test_tracer_exception(tracer, tracer_metadata):
 
     local_logger = tracer.logger
     log_target = "test"
-    thread_name = "test_fn_exception"
+    thread_id = "test_fn_exception"
     hook_name = "test_hook"
     exception_message = "Error"
 
-    @tracer.hook(thread_name, log_target=log_target)
+    @tracer.hook(thread_id, log_target=log_target)
     def test_fn(x: int, y: int, n: int) -> str:
         raise Exception(exception_message)
     
@@ -301,7 +301,7 @@ def test_tracer_exception(tracer, tracer_metadata):
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_name,
+            "trace_thread": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_exception.<locals>.test_fn"

@@ -10,8 +10,8 @@ class TracedFunctionSchema(BaseModel):
 class TraceModuleSchema(BaseModel):
     tracer_id: str
     tracer_metadata: Dict[str, Any]
-    thread_name: str
-    hook_name: str
+    thread_id: str
+    hook_id: str
     hook_metadata: Dict[str, Any]
 
 class FunctionTimestampsSchema(BaseModel):
@@ -62,7 +62,7 @@ EMPTY_TRACE_TEMPLATE = {
             "tracing_context": ""
         },
         "thread_name": "",
-        "hook_name": "",
+        "hook_id": "",
         "hook_metadata": {}
     },
     "call_id": "",
@@ -102,7 +102,7 @@ if __name__ == "__main__":
                 "tracing_context": "unit_test"
             },
             "thread_name": "test",
-            "hook_name": "impulse_hook_d9428c38",
+            "hook_id": "impulse_hook_d9428c38",
             "hook_metadata": {}
         },
         "call_id": "a9161872-d83b-42ea-8aee-75ba8ce71e5e",
@@ -132,7 +132,7 @@ if __name__ == "__main__":
                     "tracing_context": "unit_test"
                 },
                 "thread_name": "test",
-                "hook_name": "impulse_hook_d9428c38",
+                "hook_id": "impulse_hook_d9428c38",
                 "hook_metadata": {}
             },
             "parents": [
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                         "tracer_id": "",
                         "tracer_metadata": {},
                         "thread_name": "",
-                        "hook_name": "",
+                        "hook_id": "",
                         "hook_metadata": {}
                     }
                 }

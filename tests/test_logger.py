@@ -4,7 +4,7 @@ import pytest
 import os
 import json
 from pathlib import Path
-from impulse_trace.logger import BaseAsyncLogger, LocalLogger, LOCAL_ENTRY_SEP, END_OF_STREAM_TAG
+from impulse_core.logger import BaseAsyncLogger, LocalLogger, LOCAL_ENTRY_SEP, END_OF_STREAM_TAG
 
 # Fixture setups
 @pytest.fixture

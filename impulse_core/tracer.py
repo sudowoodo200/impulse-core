@@ -125,15 +125,15 @@ class ImpulseTracer:
     instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
 
     def hook(self,
-            thread_name: str = "impulse_default_thread", 
-            hook_name: Optional[str] = None,
+            thread_id: str = "impulse_default_thread", 
+            hook_id: Optional[str] = None,
             incld_instance_attr: List[str] = None,
             hook_metadata: Dict[str, Any] = {},
             is_method: bool = False,
             is_classmethod: bool = False) -> Callable:
     
-        if hook_name is None:
-            hook_name: str = "impulse_hook_" + str(uuid.uuid4())[:8]
+        if hook_id is None:
+            hook_id: str = "impulse_hook_" + str(uuid.uuid4())[:8]
 
         def decorator(func):
             """
@@ -175,8 +175,8 @@ class ImpulseTracer:
             trace_output["trace_module"] = {
                 "tracer_id": self.instance_id,
                 "tracer_metadata": self.metadata,
-                "thread_name": thread_name,
-                "hook_name": hook_name,
+                "thread_id": thread_id,
+                "hook_id": hook_id,
                 "hook_metadata": hook_metadata
             }
 
@@ -415,16 +415,16 @@ if __name__ == "__main__":
         y: int = 2
 
         @classmethod
-        @tests_tracer.hook(thread_name="test")
+        @tests_tracer.hook(thread_id="test")
         def nest_fn(cls, y, *args, **kwargs):
             z = 15
 
-        @tests_tracer.hook(thread_name="test", incld_instance_attr=["x"])
+        @tests_tracer.hook(thread_id="test", incld_instance_attr=["x"])
         async def count(self, n: int) -> AsyncGenerator[str, None]:
             for i in range(n):
                 yield str(self.x + i * self.y)
         
-        @tests_tracer.hook(thread_name="test")
+        @tests_tracer.hook(thread_id="test")
         async def cprod(self, n: int) -> str:
             return str(prod(self.x, self.y, n))
 
@@ -437,13 +437,13 @@ if __name__ == "__main__":
                 raise Exception("TEST EXCEPTION")
 
 
-    @tests_tracer.hook(thread_name="test")
+    @tests_tracer.hook(thread_id="test")
     def prod(x: int, y: int, n: int) -> int:
         return x * n * y
     
     import openai
     CHAT_THREAD = "chatbot"
-    @tests_tracer.hook(thread_name = CHAT_THREAD, hook_name="openai")
+    @tests_tracer.hook(thread_id = CHAT_THREAD, hook_id="openai")
     def llm_respond(input: str, model: str = "gpt-3.5-turbo", temperature: int = 0.1, max_tokens: int = 50):
 
         new_input = {"role": "user", "content": input}

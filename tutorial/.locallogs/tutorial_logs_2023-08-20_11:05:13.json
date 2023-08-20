@@ -1,0 +1,53 @@
+
+{
+    "payload": {
+        "function": {
+            "type": "Function",
+            "name": "llm_respond",
+            "args": [
+                "input",
+                "model",
+                "temperature",
+                "max_tokens"
+            ]
+        },
+        "trace_module": {
+            "tracer_id": "impulse_module_16ac1e3a",
+            "tracer_metadata": {
+                "environment": "dev",
+                "favorite_movie": "lotr"
+            },
+            "thread_id": "chatbot",
+            "hook_id": "openai",
+            "hook_metadata": {}
+        },
+        "call_id": "f3b6381b-8b64-4607-8dc8-9cc8405085e5",
+        "timestamps": {
+            "start": "2023-08-20 11:05:15.480470",
+            "end": "2023-08-20 11:05:15.617160",
+            "start_to_end_seconds": "0.136690"
+        },
+        "arguments": {
+            "args": {
+                "input": "Hello"
+            },
+            "kwargs": {}
+        },
+        "status": "error",
+        "exception": "Incorrect API key provided: <YOUR_AP**KEY>. You can find your API key at https://platform.openai.com/account/api-keys.",
+        "stack_trace": {
+            "parents": [
+                {
+                    "fn_name": "<module>",
+                    "call_id": "0ab1bb91-f5b9-40d4-a61d-3e9420dceaea",
+                    "trace_module": null
+                }
+            ],
+            "children": []
+        },
+        "trace_logs": []
+    },
+    "log_metadata": {
+        "source": "impulse_tracer"
+    }
+}
