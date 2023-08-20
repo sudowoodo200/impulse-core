@@ -7,6 +7,8 @@ from enum import Enum
 import asyncio
 from concurrent.futures import Future, ThreadPoolExecutor
 import functools as ft, hashlib
+import pymongo as pm
+import requests
 
 ## Base Class #################################################################
 END_OF_STREAM_TAG = None
@@ -94,11 +96,6 @@ class LocalLogger(BaseAsyncLogger):
             timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         )
         self.filename = os.path.join(self.uri, self.filename)
-        if not os.path.exists(self.uri):
-            os.makedirs(self.uri)
-        if not os.path.exists(self.filename):
-            with open(self.filename, "w") as f:
-                f.write("")
 
     def _write(self, 
                payload: Union[str,Dict[str, Any]], 
@@ -109,6 +106,13 @@ class LocalLogger(BaseAsyncLogger):
             "payload": payload,
             "log_metadata": metadata,
         }
+
+        if not os.path.exists(self.uri):
+            os.makedirs(self.uri)
+        if not os.path.exists(self.filename):
+            with open(self.filename, "w") as f:
+                f.write("")
+
         with open(self.filename, "a+") as f:
             f.write(self.entry_sep + json.dumps(data, indent = 4))
     
@@ -126,24 +130,21 @@ class LocalLogger(BaseAsyncLogger):
         super().log(payload, metadata = metadata)
 
 
-import pymongo as pm
-DEFAULT_CREDENTIALS = {
-    "user": "root",
-    "password": "example"
-}
-
 @dataclass
 class MongoLogger(BaseAsyncLogger):
 
     uri: str = "mongodb://{user}:{password}@localhost:27017/"
     auth_type: str = "userpass"
-    credentials: str = field(default_factory=dict)
+    credentials: Optional[Dict[str,str]] = None
     db_name: str = "impulse_logs"
     collection_name: str = "logs"
 
     def __post_init__(self):
         super().__post_init__()
-        self.credentials = DEFAULT_CREDENTIALS
+        self.credentials = {
+            "user": "root",
+            "password": "example"
+        } if self.credentials is None else self.credentials
         if self.auth(self.credentials):
             self._db = self._session_client[self.db_name]
             self._collection = self._db[self.collection_name]
@@ -162,7 +163,6 @@ class MongoLogger(BaseAsyncLogger):
                 return True
             except Exception as e:
                 raise e
-                return False
         else:
             raise Exception("Auth type not supported")
     
@@ -177,7 +177,6 @@ class MongoLogger(BaseAsyncLogger):
         }
 
         self._collection.insert_one(data)
-
 
 ## Dev ###############################################################
 

@@ -1,4 +1,4 @@
-all: start_database config_venv install_requirements
+all: start_database config_venv install_requirements install_impulse
 
 start_database: mongodb.yml
 	@echo "Starting database..."
@@ -12,5 +12,8 @@ install_requirements: requirements.txt
 	@echo "Installing requirements..."
 	@. ../.venv/bin/activate; \
 		pip install ipykernel -U --force-reinstall; \
-		pip install -r requirements.txt; \
-		cd .. && pip install .;
+		pip install -r requirements.txt --force-reinstall;
+
+install_impulse: ../impulse_core/* ../pyproject.toml
+	@. ../.venv/bin/activate; \
+		cd .. && pip install --no-cache-dir .;

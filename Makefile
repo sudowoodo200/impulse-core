@@ -1,7 +1,7 @@
-install: impulse_core/*, pyproject.toml
+install: impulse_core/* pyproject.toml
 	@pip install .
 
-tutorial: tutorial/*
+tutorial: tutorial/* pyproject.toml
 	@echo "Building tutorial..."
 	@cd tutorial && make
 

@@ -83,19 +83,19 @@ def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
     logger.log(payload=output, metadata={"source": "impulse_tracer_global_root"})
 
 @contextmanager
-def impulse_trace_context(new_root = None):
+def impulse_trace_context(new_root: ImpulseTraceNode = None):
     """
     Context manager for tracing.
     """
-    old_root = IMPULSE_CURRENT_TRACE_ROOT.get()
+    old_root: ImpulseTraceNode = IMPULSE_CURRENT_TRACE_ROOT.get()
     if old_root is not None:
         old_root.add_child(new_root)
-    print(f"Exiting {old_root.name} context. Entering {new_root.name}() context.")
     IMPULSE_CURRENT_TRACE_ROOT.set(new_root)
     try:
         yield
+    except Exception as e:
+        raise e
     finally:
-        print(f"Exiting {new_root.name} context. Entering {old_root.name}() context.")
         IMPULSE_CURRENT_TRACE_ROOT.set(old_root)
 
 def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
@@ -120,8 +120,8 @@ def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
 @dataclass
 class ImpulseTracer:
 
-    logger: BaseAsyncLogger
-    metadata: Dict[str, Any]
+    logger: BaseAsyncLogger = field(default_factory=LocalLogger)
+    metadata: Dict[str, Any] = field(default_factory=dict)
     instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
 
     def hook(self,
@@ -171,9 +171,9 @@ class ImpulseTracer:
             trace_output["trace_module"] = {
                 "tracer_id": self.instance_id,
                 "tracer_metadata": self.metadata,
-                "trace_thread": thread_name,
-                "trace_hook": hook_name,
-                "trace_hook_metadata": hook_metadata
+                "thread_name": thread_name,
+                "hook_name": hook_name,
+                "hook_metadata": hook_metadata
             }
 
             def trace_init(*args, **kwargs) -> ImpulseTraceNode:
@@ -190,7 +190,7 @@ class ImpulseTracer:
                 )
                 return new_root
 
-            def trace_complete(output: Any, new_root: ImpulseTraceNode) -> None:
+            def trace_complete(new_root: ImpulseTraceNode) -> None:
                 trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
                 trace_output["stack_trace"], trace_output["trace_logs"] = new_root.export() 
                 self._write(payload=trace_output)
@@ -203,6 +203,7 @@ class ImpulseTracer:
                 new_root = trace_init(*args, **kwargs)
                 
                 try:
+                    output = None
                     with impulse_trace_context(new_root):
                         output = await func(*args, **kwargs)
                     
@@ -214,7 +215,7 @@ class ImpulseTracer:
                     self._handle_exception(e, trace_output)
 
                 finally:
-                    trace_complete(output, new_root)
+                    trace_complete(new_root)
 
                 return output
             
@@ -244,7 +245,7 @@ class ImpulseTracer:
                     self._handle_exception(e, trace_output)
                 
                 finally:
-                    trace_complete(output, new_root)
+                    trace_complete(new_root)
 
             @ft.wraps(func)
             def wrapper(*args, **kwargs):
@@ -254,6 +255,7 @@ class ImpulseTracer:
                 new_root = trace_init(*args, **kwargs)
                 
                 try:
+                    output = None
                     with impulse_trace_context(new_root):
                         output = func(*args, **kwargs)
 
@@ -265,7 +267,7 @@ class ImpulseTracer:
                     self._handle_exception(e, trace_output)
                 
                 finally:
-                    trace_complete(output, new_root)
+                    trace_complete(new_root)
 
                 return output
 
@@ -366,17 +368,12 @@ class ImpulseTracer:
                 return "No logging representation available."
 
     def _handle_exception(self, e: Exception,
-                     trace_output: Dict[str, Any] = None,
-                     flush_global_root: bool = True) -> None:
+                     trace_output: Dict[str, Any] = None) -> None:
         """
         Throw an error.
         """
         trace_output["exception"] = f"{e}"
         trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
-        self._write(payload=trace_output)
-
-        if flush_global_root:
-            _flush_global_root(self.logger, update = {"status": "error", "exception": f"{e}"})
 
         raise e
 
@@ -439,23 +436,45 @@ if __name__ == "__main__":
     @tests_tracer.hook(thread_name="test")
     def prod(x: int, y: int, n: int) -> int:
         return x * n * y
+    
+    import openai
+    CHAT_THREAD = "chatbot"
+    @tests_tracer.hook(thread_name = CHAT_THREAD, hook_name="openai")
+    def llm_respond(input: str, model: str = "gpt-3.5-turbo", temperature: int = 0.1, max_tokens: int = 50):
+
+        new_input = {"role": "user", "content": input}
+        response = openai.ChatCompletion.create(
+                model=model,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": "You are an Q&A chatbot."},
+                    new_input
+                ],
+            )
+
+        return response
 
     async def main():
 
-        t = TestClass()
-        async for i in t.count(5):
-            pass
-        await t.cprod(5)
+        # t = TestClass()
+        # async for i in t.count(5):
+        #     pass
+        # await t.cprod(5)
 
-        try:
-            async for i in count(1, 2, n=5):
-                pass
-        except Exception as e:
-            pass
-        finally:
-            pass
+        # try:
+        #     async for i in count(1, 2, n=5):
+        #         pass
+        # except Exception as e:
+        #     pass
+        # finally:
+        #     pass
 
-        x = 5
-        t.nest_fn(x, 3, m=20)
+        # x = 5
+        # t.nest_fn(x, 3, m=20)
+
+        output = llm_respond("Hello", model = "lol")
+        print(output)
+
 
     asyncio.run(main())
