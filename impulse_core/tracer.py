@@ -119,8 +119,6 @@ def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
         print(f"[TRACE LOG] {curr_root.name}() @ {now} : {payload}")
 
 
-## Tracer #############################################################
-
 STANDARD_TYPES = (int, float, str, bool, list, dict, tuple, set, frozenset, type(None))
 
 def conform_output(obj: Any) -> Union[str,Dict[str, Any]]:
