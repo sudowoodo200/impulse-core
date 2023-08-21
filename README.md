@@ -33,7 +33,7 @@ The record will capture information (under the `"payload"` field of the json rec
 {
     "function": {
         "name" : "some_function"
-        ...
+        // ...
     },
     "call_id": "asfda2323-52sdfasd",
     "timestamps": {
@@ -47,7 +47,7 @@ The record will capture information (under the `"payload"` field of the json rec
     },
     "status": "success",
     "output": "1 - 2"
-    ...
+    // ...
 }
 ```
 
@@ -70,49 +70,49 @@ The log records will preserve the parent-child relationship between `some_functi
 {
     "function": {
         "name" : "top_level",
-        ...
+        // ...
     },
     "call_id": "asdfasdf-2352dsafsa",
-    ...
+    // ...
     "stack_trace": {
         "parents": [
-            ...
+            // ...
         ],
         "children": [
             {
                 "fn_name": "some_function",
                 "call_id": "asfda2323-52sdfasd" ,
                 "trace_module": {
-                    ...
+                    // ...
                 }
             }
         ]
     }
-    ...
+    // ...
 }
 {
     "function": {
         "name" : "some_function",
-        ...
-    }
+        // ...
+    },
     "call_id": "asfda2323-52sdfasd",
-    ...
+    // ...
     "stack_trace": {
         "parents": [
             {
                 "fn_name": "top_level",
                 "call_id": "asdfasdf-2352dsafsa",
                 "trace_module": {
-                    ...
+                    // ...
                 }
             }
         ],
         "children": [
-            ...
+            // ...
         ]
     }
 
-    ...
+    // ...
 }
 ```
 
@@ -134,20 +134,20 @@ These can be accessed in the `"trace_log"` field of the record.
 {
     "function": {
         "name" : "some_function"
-        ...
+        // ...
     },
-    ...
+    // ...
     "trace_log": [
         {
             "timestamp": "2023-08-20 22:05:55.000511",
             "payload": "The ents shall march to"
         },
-        ...
+        // ...
     ]
 }
+```
 
 Common use cases include capturing session data when serving web requests and doing more granular logging of function components.
-```
 
 ### Tutorial
 
