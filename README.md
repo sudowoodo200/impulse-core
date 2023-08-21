@@ -124,7 +124,11 @@ The log records will preserve the parent-child relationship between `some_functi
 }
 ```
 
-Each `@trace.hook()` creates a context until superceded by a nested hook. A simple by powerful feature is the ability to log arbitrary data, timestamped, directly into the context, which is then included as part of the enclosing logging record. The only restriction is that it must be convertible with `json.dumps`.
+Each `@trace.hook()` creates a context until superceded by a nested hook. 
+
+### Trace Logs
+
+Another simple by powerful feature is the ability to log arbitrary data, timestamped, directly into the context, which is then included as part of the enclosing logging record. The only restriction is that it must be convertible with `json.dumps`.
 
 ```python
 from impulse_core import trace_log as log
