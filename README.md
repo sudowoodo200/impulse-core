@@ -82,10 +82,8 @@ The log records will preserve the parent-child relationship between `some_functi
             {
                 "fn_name": "some_function",
                 "call_id": "asfda2323-52sdfasd" ,
-                "trace_module": {
-                    ...
-                }
-            }
+                "trace_module": { ... }
+            },
         ]
     }
     ...
@@ -102,10 +100,8 @@ The log records will preserve the parent-child relationship between `some_functi
             {
                 "fn_name": "top_level",
                 "call_id": "asdfasdf-2352dsafsa",
-                "trace_module": {
-                    ...
-                }
-            }
+                "trace_module": { ... }
+            },
         ],
         "children": [
             ...
