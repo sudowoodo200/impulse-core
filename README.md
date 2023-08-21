@@ -32,7 +32,7 @@ The record will capture information (under the `"payload"` field of the json rec
 ```javascript
 {
     "function": {
-        "name" : "some_function"
+        "name" : "some_function",
         ...
     },
     "call_id": "asfda2323-52sdfasd",
@@ -46,7 +46,7 @@ The record will capture information (under the `"payload"` field of the json rec
         "y": 2
     },
     "status": "success",
-    "output": "1 - 2"
+    "output": "1 - 2",
     ...
 }
 ```
@@ -133,7 +133,7 @@ These can be accessed in the `"trace_log"` field of the record.
 ```javascript
 {
     "function": {
-        "name" : "some_function"
+        "name" : "some_function",
         ...
     },
     ...
