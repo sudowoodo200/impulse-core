@@ -35,6 +35,12 @@ The record will capture information (under the `"payload"` field of the json rec
         "name" : "some_function",
         ...
     },
+    "trace_module": {
+        "tracer_id": "asdfase-234234sdafs-aerwer",
+        "thread_id": "default",
+        "hook_id": "some_function",
+        ...
+    }
     "call_id": "asfda2323-52sdfasd",
     "timestamps": {
         "start": "2023-08-20 22:05:55.000000",
@@ -51,7 +57,13 @@ The record will capture information (under the `"payload"` field of the json rec
 }
 ```
 
-This works with functions, methods, classmethods, staticmethods, coroutines, and async generators. If an exception occurs, logging will still happen.
+Each record is uniquely identified by 4 fields:
+ - A `call` is every single run of the `traced function`, identified by a `call_id` field in the logs. Each `call` also defines a `trace_log()` context. (see below)
+ - A `hook` is a decorator for a specific function, identified by `hook_id`. Functions with hooks are called `traced function`.
+ - A `thread` is a collection of `hook`'s, identified by the `thread_id` argument while specifying the `hook`
+ - A `module` is an instance of the `ImpulseTracer` class, identified by the `instance_id` attribute and manages a collection of `threads`
+ 
+This works with functions, methods, classmethods, staticmethods, coroutines, and async generators. If an exception occurs, logging will still happen. 
 
 You can trace nested calls by decorating the relevant functions. For instance:
 
