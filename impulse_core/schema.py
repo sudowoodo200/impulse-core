@@ -9,10 +9,12 @@ class TracedFunctionSchema(BaseModel):
 
 class TraceModuleSchema(BaseModel):
     tracer_id: str
-    tracer_metadata: Dict[str, Any]
+    session_id: str
     thread_id: str
     hook_id: str
-    hook_metadata: Dict[str, Any]
+    tracer_metadata: Optional[Dict[str, Any]] = None
+    session_metadata: Optional[Dict[str, Any]] = None
+    hook_metadata: Optional[Dict[str, Any]] = None
 
 class FunctionTimestampsSchema(BaseModel):
     start: datetime

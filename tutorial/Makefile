@@ -1,8 +1,8 @@
 all: start_database config_venv install_requirements install_impulse
 
-start_database: mongodb.yml
+start_database: ../app/database/mongo.yml
 	@echo "Starting database..."
-	@docker-compose -f mongodb.yml up -d
+	@docker-compose -f ../app/database/mongo.yml up -d
 
 config_venv: 
 	@echo "Starting virtual environment..."

@@ -135,8 +135,17 @@ def conform_output(obj: Any) -> Union[str,Dict[str, Any]]:
 class ImpulseTracer:
 
     logger: BaseAsyncLogger = field(default_factory=LocalLogger)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Optional[Dict[str, Any]] = None
     instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
+    session_id: str = "run_"+datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    session_metadata: Optional[Dict[str, Any]] = None
+
+    def set_session_id(self, session_id: str, session_metadata: Optional[Dict[str, Any]] = None) -> None:
+        """
+        Set the session id.
+        """
+        self.session_id = session_id
+        self.session_metadata = session_metadata
 
     def hook(self,
             thread_id: str = "default", 
@@ -171,9 +180,11 @@ class ImpulseTracer:
             }
             trace_output["trace_module"] = {
                 "tracer_id": self.instance_id,
-                "tracer_metadata": self.metadata,
+                "session_id": self.session_id,
                 "thread_id": thread_id,
                 "hook_id": hook_id,
+                "tracer_metadata": self.metadata,
+                "session_metadata": self.session_metadata,
                 "hook_metadata": hook_metadata
             }
 

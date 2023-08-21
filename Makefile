@@ -6,7 +6,7 @@ shutdown-tutorial:
 	@echo "Shutting down tutorial assets..."
 	@docker kill tutorial-mongo-1 tutorial-mongo-express-1
 	@rm -rf .venv
-	@rm -rf tutorial/.mdblogs tutorial/.locallogs
+	@rm -rf tutorial/.locallogs
 
 test:
 	@echo "Running tests..."
@@ -22,4 +22,5 @@ install: impulse_core/* pyproject.toml
 
 clean:
 	@ echo "Cleaning up..."
-	@ rm -rf dist .mypy_cache .pytest_cache impulse_core/__pycache__ 
+	@ rm -rf .venv dist .mypy_cache .pytest_cache impulse_core/__pycache__ 
+	@ rm -rf app/database/.mdblogs

@@ -25,7 +25,10 @@ tracer = ImpulseTracer()
 def some_function(x: int, y: str = 2) -> str:
     return f"{str(x)} - {y}"
 
-some_function(1)
+def handle_request():
+    tracer.set_session_id("user_abc_session_1")
+    some_function(1)
+
 tracer.shutdown() ## needed for local logger to flush the write buffer
 ```
 The record will capture information (under the `"payload"` field of the json record) during the function call:
