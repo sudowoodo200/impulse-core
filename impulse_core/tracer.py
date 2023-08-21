@@ -146,21 +146,16 @@ class ImpulseTracer:
             """
             Decorator for logging various objects.
             
-            For straight function calls:
-                - timestamp
-                - the function name, arguments, and return value 
-            
-            For method function calls:
-                - timestamp
-                - the function name, arguments, and return value
-                - the class name, any class instance variables
-
+            Captures the following fields:
+                - the function name, arguments, instance attributes, and return value 
+                - timestamps, time to complete call
+                - relation to other traced functions
             """
 
             f_name: str = func.__qualname__
             f_args: List[str] = inspect.getfullargspec(func).args
             nonlocal hook_id
-            
+
             if hook_id is None:
                 hook_id = f_name
 
