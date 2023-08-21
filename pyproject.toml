@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "impulse_core"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 authors = ["sudowoodo200 <sudowoodo200@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/sudowoodo200/impulse-core/"
 
 [tool.poetry.dependencies]
 python = "^3.9"
