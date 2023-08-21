@@ -1,6 +1,6 @@
 # Impulse
 
-This is a minimalist (but powerful) tracing framework for building Python applications, particularly those involving LLMs and AI features. We built this while refining LLM applications to be production-ready because we didn't want to commit to overly opinionated frameworks from other solution providers. We will pull more features from our stack into this if there is interest. Feel free to file issues and reach out for feedback: sudowoodo200 [at] gmail [dot] com+
+This is a minimalist (but powerful) tracing framework for building Python applications, particularly those involving LLMs and AI features. We built this while refining LLM applications to be production-ready because we didn't want to commit to overly opinionated frameworks from other solution providers. We will pull more features from our stack into this if there is interest. Feel free to file issues and reach out for feedback: sudowoodo200 [at] gmail [dot] com. 
 
 ## Quickstart
 
@@ -151,7 +151,7 @@ Common use cases include capturing session data when serving web requests and do
 
 ### Tutorial
 
-A quick tutorial can be found at `tutorial/tutorial.ipynb`. To get started, use the following to boot up a virtual env with a local mongo-db instance.
+Apologies for the lack of docs for now. Still drafting it. In its place, a quick tutorial can be found at `tutorial/tutorial.ipynb`. To get started, use the following to boot up a virtual env with a local mongo-db instance.
 
 ```bash
 make tutorial
