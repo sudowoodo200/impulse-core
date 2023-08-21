@@ -1,6 +1,6 @@
 # Impulse
 
-This is a minimalist (but powerful) tracing framework for building Python applications, particularly those involving LLMs and AI features. We built this while refining LLM applications to be production-ready, and we didn't want to commit to opinionated, lock-in frameworks from other solution providers. We will pull more features from our stack into this if there is interest. Feel free to file issues or provide feedback: sudowoodo200 [at] gmail [dot] com. 
+This is a minimalist tracing framework for building Python applications, particularly those involving LLM chains. We built this while refining LLM applications to be production-ready, and we didn't want to commit to opinionated frameworks from other solution providers. Feel free to file issues or provide feedback: sudowoodo200 [at] gmail [dot] com. 
 
 ## Quickstart
 
