@@ -150,7 +150,8 @@ class ImpulseTracer:
     def hook(self,
             thread_id: str = "default", 
             hook_id: Optional[str] = None,
-            hook_metadata: Dict[str, Any] = {}) -> Callable:
+            hook_metadata: Dict[str, Any] = {},
+            output_postprocess: Optional[Callable] = None) -> Callable:
 
         def decorator(func: Callable) -> Callable:
             """
@@ -220,6 +221,10 @@ class ImpulseTracer:
                         output = await func(*args, **kwargs)
                     
                     trace_output["status"] = "success"
+
+                    if output_postprocess is not None:
+                        output = output_postprocess(output)
+
                     trace_output["output"] = self._parse_item(output)
 
                 except Exception as e:
@@ -247,6 +252,9 @@ class ImpulseTracer:
                     
                     if all([isinstance(output[i], str) for i in range(len(output))]):
                         output = "".join(output)
+                    
+                    if output_postprocess is not None:
+                        output = output_postprocess(output)
 
                     trace_output["status"] = "success"
                     trace_output["output"] = self._parse_item(output)
@@ -272,6 +280,9 @@ class ImpulseTracer:
                         output = func(*args, **kwargs)
 
                     trace_output["status"] = "success"
+                    if output_postprocess is not None:
+                        output = output_postprocess(output)
+                        
                     trace_output["output"] = self._parse_item(output)
                     
                 except Exception as e:
@@ -296,7 +307,8 @@ class ImpulseTracer:
             thread_id: str = "default", 
             traced_methods: List[str] = field(default_factory=list),
             hook_ids: Optional[Union[str, Dict[str, str]]] = None,
-            hook_metadata: Dict[str, Any] = {}) -> type:
+            hook_metadata: Dict[str, Any] = {},
+            output_postprocess: Optional[Dict[str,Callable]] = None) -> type:
         
         if len(traced_methods) == 0:
             traced_methods = ["__call__"]
@@ -306,6 +318,8 @@ class ImpulseTracer:
             class_name = cls.__name__
 
             for method in traced_methods:
+                if method not in cls.__dict__:
+                    print(f"[TRACE WARNING]: {method} not found in {class_name}.")
                 if method not in hook_ids:
                     hook_ids[method] = getattr(cls, method).__qualname__
             
@@ -402,7 +416,8 @@ class ImpulseTracer:
 
         raise e
 
-    def _write(self, payload: Dict[str, Any]):
+    def _write(self, 
+               payload: Dict[str, Any]) -> None:
         """
         Validate and write the payload to the logger.
         """
