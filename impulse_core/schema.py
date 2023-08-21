@@ -5,14 +5,14 @@ from datetime import datetime
 class TracedFunctionSchema(BaseModel):
     type: str
     name: str
-    args: List[str]
+    args: Optional[List[str]] = None
 
 class TraceModuleSchema(BaseModel):
     tracer_id: str
     session_id: str
     thread_id: str
     hook_id: str
-    tracer_metadata: Optional[Dict[str, Any]] = None
+    tracer_metadata: Dict[str, Any]
     session_metadata: Optional[Dict[str, Any]] = None
     hook_metadata: Optional[Dict[str, Any]] = None
 
@@ -53,15 +53,7 @@ EMPTY_TRACE_TEMPLATE = {
         "name": "",
         "args": []
     },
-    "trace_module": {
-        "tracer_id": "",
-        "tracer_metadata": {
-            "tracing_context": ""
-        },
-        "thread_id": "",
-        "hook_id": "",
-        "hook_metadata": {}
-    },
+    "trace_module": {},
     "call_id": "",
     "timestamps": {
         "start": "",

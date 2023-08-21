@@ -48,10 +48,9 @@ with app:
                                           {"payload.trace_module.session_id": session})
             thread = st.selectbox("Select a thread", options=threads)
 
-            data = list[collection.find({"payload.trace_module.tracer_id": tracer_id,
-                                    "payload.trace_module.session_id": session,
-                                    "payload.trace_module.thread_id": thread},
-                                    projection={"payload": 1, "_id": 0})]
+            data = list[collection.find({"payload.trace_module.session_id": session,
+                                        "payload.trace_module.thread_id": thread},
+                                        projection={"payload": 1, "_id": 0})]
             
             set_session_var("data", data)
     

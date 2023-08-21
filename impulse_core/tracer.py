@@ -63,28 +63,6 @@ IMPULSE_GLOBAL_ROOT = ImpulseTraceNode(
 )
 IMPULSE_CURRENT_TRACE_ROOT: cv.ContextVar[ImpulseTraceNode] = cv.ContextVar("IMPULSE_CURRENT_TRACE_ROOT", default=IMPULSE_GLOBAL_ROOT)
 
-def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
-    """
-    Flush the global root.
-    """
-    assert IMPULSE_GLOBAL_ROOT is not None, "Global root context not found."
-    output = EMPTY_TRACE_TEMPLATE.copy()
-    output["function"] = {
-        "type": "Function",
-        "name": IMPULSE_GLOBAL_ROOT.name
-    }
-    output["call_id"] = IMPULSE_GLOBAL_ROOT.call_id
-    output["timestamps"]= {
-        "start": IMPULSE_GLOBAL_ROOT.creation_time,
-        "end": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-    }
-    output["stack_trace"], output["trace_logs"] = IMPULSE_GLOBAL_ROOT.export()
-    output["status"] = "success"
-    output["output"] = None
-    output["exception"] = None
-    output.update(update)
-    logger.log(payload=output, metadata={"source": "impulse_tracer_global_root"})
-
 @contextmanager
 def impulse_trace_context(new_root: ImpulseTraceNode):
     """
@@ -135,7 +113,7 @@ def conform_output(obj: Any) -> Union[str,Dict[str, Any]]:
 class ImpulseTracer:
 
     logger: BaseAsyncLogger = field(default_factory=LocalLogger)
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
     instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
     session_id: str = "run_"+datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
     session_metadata: Optional[Dict[str, Any]] = None
@@ -428,12 +406,57 @@ class ImpulseTracer:
         finally:
             self.logger.log(payload=payload, metadata={"source": "impulse_tracer"})
 
+    def _flush_global_root(self):
+        """
+        Flush the global root.
+        """
+        assert IMPULSE_GLOBAL_ROOT is not None, "Global root context not found."
+        output = EMPTY_TRACE_TEMPLATE.copy()
+        output["function"] = {
+            "type": "Function",
+            "name": IMPULSE_GLOBAL_ROOT.name,
+            "args": []
+        }
+        output["trace_module"] = {
+            "tracer_id": self.instance_id,
+            "session_id": self.session_id,
+            "thread_id": "root",
+            "hook_id": "global_root",
+            "tracer_metadata": self.metadata,
+            "session_metadata": self.session_metadata,
+            "hook_metadata": {}
+        }
+        output["call_id"] = IMPULSE_GLOBAL_ROOT.call_id
+        output["timestamps"]= {
+            "start": IMPULSE_GLOBAL_ROOT.creation_time,
+            "end": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+        }
+        output["stack_trace"], output["trace_logs"] = IMPULSE_GLOBAL_ROOT.export()
+        output["status"] = "success"
+        output["output"] = None
+        output["exception"] = None
+
+        self._write(payload=output)
+
     def shutdown(self, flush_global_root: bool = True) -> None:
         """
         Shutdown the tracer.
         """
         if flush_global_root:
-            _flush_global_root(self.logger)
+            self._flush_global_root()
 
         self.logger.shutdown()
         
+
+if __name__ == "__main__":
+
+    logger = LocalLogger()
+    tracer = ImpulseTracer()
+
+    @tracer.hook(thread_id="test_thread")
+    def test_func(a: int, b: int, c: int = 1) -> int:
+        return a + b + c
+    
+    test_func(1, 2, 3)
+
+    tracer.shutdown()
