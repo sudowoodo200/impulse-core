@@ -73,9 +73,7 @@ The log records will preserve the parent-child relationship between `some_functi
         ...
     },
     "call_id": "asdfasdf-2352dsafsa",
-
     ...
-
     "stack_trace": {
         "parents": [
             ...
@@ -92,16 +90,13 @@ The log records will preserve the parent-child relationship between `some_functi
     }
     ...
 }
-
 {
     "function": {
         "name" : "some_function",
         ...
     }
     "call_id": "asfda2323-52sdfasd",
-
     ...
-
     "stack_trace": {
         "parents": [
             {
