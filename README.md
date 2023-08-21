@@ -5,7 +5,7 @@ This is a minimalist (but powerful) tracing framework for building Python applic
 ## Quickstart
 
 ### Installation
- - Install from PyPI: `pip install impulse_core`
+ - Install from PyPI: `pip install impulse-core`
  - Direct install: `make install`. Note that this is _not_ an editable installation
 
 ### Usage
