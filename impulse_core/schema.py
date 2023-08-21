@@ -56,7 +56,7 @@ EMPTY_TRACE_TEMPLATE = {
         "tracer_metadata": {
             "tracing_context": ""
         },
-        "thread_name": "",
+        "thread_id": "",
         "hook_id": "",
         "hook_metadata": {}
     },

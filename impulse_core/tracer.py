@@ -141,11 +141,9 @@ class ImpulseTracer:
     instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
 
     def hook(self,
-            thread_id: str = "impulse_default_thread", 
+            thread_id: str = "default", 
             hook_id: Optional[str] = None,
-            hook_metadata: Dict[str, Any] = {},
-            is_method: bool = False,
-            is_classmethod: bool = False) -> Callable:
+            hook_metadata: Dict[str, Any] = {}) -> Callable:
 
         def decorator(func: Callable) -> Callable:
             """

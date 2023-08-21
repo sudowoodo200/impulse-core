@@ -84,8 +84,8 @@ class BaseAsyncLogger:
 LOCAL_ENTRY_SEP ="\n\n"
 @dataclass
 class LocalLogger(BaseAsyncLogger):
-    uri: str = "./.impulse_logs/"
-    filename: str = "logs_{timestamp}.json"
+    uri: str = "./.impulselogs/"
+    filename: str = "log_{timestamp}.json"
     entry_sep: str = LOCAL_ENTRY_SEP
     num_threads: int = 1 # dumb way to ensure no file contention
 
