@@ -292,6 +292,27 @@ class ImpulseTracer:
             
         return decorator
 
+    def classhook(self,
+            thread_id: str = "default", 
+            traced_methods: List[str] = field(default_factory=list),
+            hook_ids: Optional[Union[str, Dict[str, str]]] = None,
+            hook_metadata: Dict[str, Any] = {}) -> type:
+        
+        if len(traced_methods) == 0:
+            traced_methods = ["__call__"]
+
+        def decorate(cls: type) -> type:
+        
+            class_name = cls.__name__
+
+            for method in traced_methods:
+                if method not in hook_ids:
+                    hook_ids[method] = getattr(cls, method).__qualname__
+            
+            # TODO: call hook on each method
+
+        raise NotImplementedError("Class decorator not yet implemented.")
+    
     def _initialize_call(self) -> Dict[str, Any]:
         output = {}
         output["call_id"] = str(uuid.uuid4())

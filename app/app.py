@@ -11,16 +11,21 @@ with app:
     ## Add a sidebar
     with st.sidebar:
 
-        st.title("Trace Tree")
+        st.title("Select session id")
     
     "---"
 
      ## Add a main page
     with st.container():
 
-        col1, col2 = st.columns([1, 5])
+        col1, col2 = st.columns([1, 1])
         with col1:
-            st.write("ABC")
+            st.write("Inputs")
 
         with col2:
-            st.write("XYZ")
+            st.write("Outputs")
+
+        "---"
+        
+        with st.container():
+            st.write("Trace Logs")
