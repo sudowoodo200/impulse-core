@@ -28,7 +28,7 @@ def some_function(x: int, y: str = 2) -> str:
 some_function(1)
 tracer.shutdown() ## needed for local logger to flush the write buffer
 ```
-The record will capture information (under the `"payload"` field of the json record) during the call:
+The record will capture information (under the `"payload"` field of the json record) during the function call:
 ```javascript
 {
     "function": {
