@@ -9,7 +9,6 @@ from concurrent.futures import Future, ThreadPoolExecutor
 import functools as ft, hashlib
 import pymongo as pm
 
-## Base Class #################################################################
 END_OF_STREAM_TAG = None
 @dataclass
 class BaseAsyncLogger:
