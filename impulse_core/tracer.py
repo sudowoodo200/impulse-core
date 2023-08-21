@@ -115,10 +115,6 @@ def trace_log(payload: Union[str, Dict[str, Any]], printout: bool = True):
 
 
 ## Tracer #############################################################
-# class ImpulseFnTypes(Enum):
-#     FUNCTION = "Function"
-#     METHOD = "Method"
-#     CLASSMETHOD = "Classmethod"
 
 STANDARD_TYPES = (int, float, str, bool, list, dict, tuple, set, frozenset, type(None))
 
@@ -145,9 +141,6 @@ class ImpulseTracer:
             hook_metadata: Dict[str, Any] = {},
             is_method: bool = False,
             is_classmethod: bool = False) -> Callable:
-    
-        if hook_id is None:
-            hook_id: str = "impulse_hook_" + str(uuid.uuid4())[:8]
 
         def decorator(func):
             """
@@ -166,17 +159,10 @@ class ImpulseTracer:
 
             f_name: str = func.__qualname__
             f_args: List[str] = inspect.getfullargspec(func).args
-
-            # # Can't use inspect.ismethod() because it returns False before method is bound
-            # # See https://stackoverflow.com/questions/11731136/class-method-decorator-with-self-arguments
-
-            # FN_TYPE = ImpulseFnTypes.FUNCTION
-            # if len(f_args) > 0:
-            #     if f_args[0] == "self" or is_method:
-            #         FN_TYPE = ImpulseFnTypes.METHOD
-            #     elif f_args[0] == "cls" or is_classmethod :
-            #         FN_TYPE = ImpulseFnTypes.CLASSMETHOD
+            nonlocal hook_id
             
+            if hook_id is None:
+                hook_id = f_name
 
             IS_COROUTINE = inspect.iscoroutinefunction(func) 
             IS_ASYNCGEN = inspect.isasyncgenfunction(func) 
@@ -452,7 +438,7 @@ if __name__ == "__main__":
     
     import openai
     CHAT_THREAD = "chatbot"
-    @tests_tracer.hook(thread_id = CHAT_THREAD, hook_id="openai")
+    @tests_tracer.hook(thread_id = CHAT_THREAD)
     def llm_respond(input: str, model: str = "gpt-3.5-turbo", temperature: int = 0.1, max_tokens: int = 50):
 
         new_input = {"role": "user", "content": input}
