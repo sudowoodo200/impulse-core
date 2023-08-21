@@ -13,7 +13,7 @@ This is a minimalist (but powerful) tracing framework for building Python applic
 This initializes the objects with default settings
 
  - `tracer` will use a `LocalLogger`, which writes json records to a file at `.impulselogs/logs_{timestamp}.json`
- - Currently, this supports logging to a MongoDB database out of the box.
+ - Currently, this also supports logging to a MongoDB database out of the box. Use `MongoLogger` class instead. (See tutorial)
  - `tracer.hook()` will be set to the default thread at `"default"`
 
 ```python
