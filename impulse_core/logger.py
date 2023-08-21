@@ -119,21 +119,15 @@ class LocalLogger(BaseAsyncLogger):
 @dataclass
 class MongoLogger(BaseAsyncLogger):
 
-    uri: str = "mongodb://{user}:{password}@localhost:27017/"
-    auth_type: str = "userpass"
-    credentials: Optional[Dict[str,str]] = None
+    uri: str = "mongodb://root:example@localhost:27017/"
     db_name: str = "impulse_logs"
     collection_name: str = "logs"
 
     def __post_init__(self):
         super().__post_init__()
-        self.credentials = {
-            "user": "root",
-            "password": "example"
-        } if self.credentials is None else self.credentials
-        if self.auth(self.credentials):
-            self._db = self._session_client[self.db_name]
-            self._collection = self._db[self.collection_name]
+        self._session_client = pm.MongoClient(self.uri)
+        self._db = self._session_client[self.db_name]
+        self._collection = self._db[self.collection_name]
     
     def auth(self, credentials: Any) -> bool:
         """
