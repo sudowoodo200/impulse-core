@@ -16,4 +16,4 @@ install_requirements: requirements.txt
 
 install_impulse: ../impulse_core/* ../pyproject.toml
 	@. ../.venv/bin/activate; \
-		cd .. && pip install --no-cache-dir .;
+		cd .. && pip install --no-cache-dir --force-reinstall .;
