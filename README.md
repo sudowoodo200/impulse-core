@@ -159,7 +159,7 @@ Common use cases include capturing session data when serving web requests and do
 
 ### Tutorial
 
-Apologies for the lack of docs for now. Still drafting it. In its place, a quick tutorial can be found at `tutorial/tutorial.ipynb`. To get started, use the following to boot up a virtual env with a local mongo-db instance.
+Apologies for the lack of docs for now. Still drafting it. In its place, a quick tutorial can be found at [tutorial/tutorial.ipynb](./tutorial/tutorial.ipynb). To get started, use the following to boot up a virtual env with a local mongo-db instance.
 
 ```bash
 make tutorial
