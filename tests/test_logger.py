@@ -33,23 +33,19 @@ def test_local_logger_init(local_logger):
 def test_local_logger_log_to_file(local_logger):
     payload = {"key": "value"}
     metadata = {"meta": "data"}
-    log_target = "test_target"
-    tag = "test_tag"
 
-    local_logger.log(payload, metadata=metadata, log_target=log_target, tag=tag)
-    local_logger.shutdown() ## this is necessary to wait for the thread to finish
+    local_logger.log(payload, metadata=metadata)
+    local_logger.shutdown()
     
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
-    assert filepath.exists()
+    filepath = Path(local_logger.filename)
+    assert filepath.exists(), f"File {filepath} does not exist."
+
     with open(filepath, 'r') as f:
-        content = f.read().split(LOCAL_ENTRY_SEP)
-        logged_data = json.loads(content[0])
+        content = f.read()
+        logged_data = json.loads(content)
         
-        assert logged_data["payload"] == payload
-        assert logged_data["log_metadata"] == metadata
-        assert logged_data["log_target"] == log_target
+        assert logged_data["payload"] == payload , f"Payload {logged_data['payload']} does not match {payload}"
+        assert logged_data["log_metadata"] == metadata , f"Metadata {logged_data['log_metadata']} does not match {metadata}"
 
     os.remove(filepath)
 
@@ -71,24 +67,21 @@ def test_local_logger_stream(local_logger):
     
     buffering_queue = queue.Queue()
     metadata = {"user": "teststream"}
-    log_target = "test"
-    local_logger.log(buffering_queue, metadata=metadata, log_target=log_target)
+    local_logger.log(buffering_queue, metadata=metadata)
 
     task = loop.create_task(stream_in(buffering_queue, name = "1"))
     loop.run_until_complete(task)
 
     local_logger.shutdown() ## this is necessary to wait for the thread to finish
-
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
     
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
         content = f.read().split(LOCAL_ENTRY_SEP)
         logged_data = json.loads(content[0])
         
         assert logged_data["payload"] == "Stream 1: Token 0. Token 1. Token 2. Token 3. "
         assert logged_data["log_metadata"] == metadata
-        assert logged_data["log_target"] == log_target
 
     os.remove(filepath)

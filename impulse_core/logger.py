@@ -8,7 +8,6 @@ import asyncio
 from concurrent.futures import Future, ThreadPoolExecutor
 import functools as ft, hashlib
 import pymongo as pm
-import requests
 
 ## Base Class #################################################################
 END_OF_STREAM_TAG = None
@@ -82,7 +81,7 @@ class BaseAsyncLogger:
         """
         self._pool.shutdown(wait, cancel_futures = cancel_futures, *args, **kwargs)
 
-LOCAL_ENTRY_SEP ="\n"
+LOCAL_ENTRY_SEP ="\n\n"
 @dataclass
 class LocalLogger(BaseAsyncLogger):
     uri: str = "./.impulse_logs/"
@@ -114,6 +113,7 @@ class LocalLogger(BaseAsyncLogger):
                 f.write(data)
         else:
             with open(self.filename, "a+") as f:
+                f.write(self.entry_sep)
                 f.write(data)
 
 

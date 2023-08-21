@@ -1,12 +1,11 @@
 from __future__ import annotations
-from ast import Tuple
 from contextlib import contextmanager
-import contextvars
+import contextvars as cv
 import inspect
 import json, os, sys, time, uuid
 from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union, Callable
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union, Callable, Tuple
 from enum import Enum
 import asyncio
 import functools as ft, hashlib
@@ -19,8 +18,8 @@ class ImpulseTraceNode:
     
     name: str
     call_id: str
-    trace_module: Dict[str, Any]
-    creation_time: datetime = datetime.now()
+    trace_module: Optional[Dict[str, Any]]
+    creation_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
     parents: List[ImpulseTraceNode] = field(default_factory=list)
     children: List[ImpulseTraceNode] = field(default_factory=list)
     trace_logs: List[Dict[str, Any]] = field(default_factory=list)
@@ -30,7 +29,7 @@ class ImpulseTraceNode:
         self.children.append(child_node)
         child_node.parents.append(self)
 
-    def export(self) -> Tuple(Dict[str, Any], List[Dict[str, Any]]):
+    def export(self) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
 
         # Handles multiprocessing
         for parent in self.parents:
@@ -43,20 +42,26 @@ class ImpulseTraceNode:
             "children": [child.export_node() for child in self.children]
         }, self.trace_logs
 
-    def export_node(self) -> List[Dict[str, Any]]:
+    def export_node(self) -> Dict[str, Any]:
         return {
             "fn_name": self.name,
             "call_id": self.call_id,
             "trace_module": self.trace_module,
         }
 
+curr_frame = inspect.currentframe()
+if curr_frame is not None:
+    root_name = curr_frame.f_code.co_name
+else: 
+    root_name = "<module>"
+
 IMPULSE_GLOBAL_ROOT = ImpulseTraceNode(
-    name = inspect.currentframe().f_code.co_name,
+    name = root_name,
     call_id = str(uuid.uuid4()),
     creation_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f"),
     trace_module = None
 )
-IMPULSE_CURRENT_TRACE_ROOT: Optional[ImpulseTraceNode] = contextvars.ContextVar("IMPULSE_CURRENT_TRACE_ROOT", default=IMPULSE_GLOBAL_ROOT)
+IMPULSE_CURRENT_TRACE_ROOT: cv.ContextVar[ImpulseTraceNode] = cv.ContextVar("IMPULSE_CURRENT_TRACE_ROOT", default=IMPULSE_GLOBAL_ROOT)
 
 def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
     """
@@ -81,7 +86,7 @@ def _flush_global_root(logger: BaseAsyncLogger, update: Dict[str, Any] = {}):
     logger.log(payload=output, metadata={"source": "impulse_tracer_global_root"})
 
 @contextmanager
-def impulse_trace_context(new_root: ImpulseTraceNode = None):
+def impulse_trace_context(new_root: ImpulseTraceNode):
     """
     Context manager for tracing.
     """
@@ -120,8 +125,8 @@ STANDARD_TYPES = (int, float, str, bool, list, dict, tuple, set, frozenset, type
 
 def conform_output(obj: Any) -> Union[str,Dict[str, Any]]:
     try:
-        if json.dumps(obj):
-            return obj
+        json.dumps(obj)
+        return obj
     except:
         try:
             return str(obj)
@@ -142,7 +147,7 @@ class ImpulseTracer:
             is_method: bool = False,
             is_classmethod: bool = False) -> Callable:
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             """
             Decorator for logging various objects.
             
@@ -287,14 +292,11 @@ class ImpulseTracer:
 
     def _get_time(self, 
                   field_name: str, 
-                  past_times: Optional[Dict[str,str]] = {}, 
+                  past_times: Dict[str,str] = {}, 
                   delta_to: Optional[str] = None) -> Dict[str, Any]:
         
         now: datetime = datetime.now()
-        output = {"timestamps": {
-            **past_times,
-            field_name: now.strftime("%Y-%m-%d %H:%M:%S.%f")
-        }}
+        output = {"timestamps": {field_name: now.strftime("%Y-%m-%d %H:%M:%S.%f"), **past_times}}
 
         if delta_to is not None:
             timestamp = past_times[delta_to]
@@ -304,7 +306,7 @@ class ImpulseTracer:
 
     def _process_inputs(self,
                         sig: inspect.Signature,
-                        args: Tuple[Any],
+                        args: Tuple[Any, ...],
                         kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Process the arguments to be logged.
@@ -362,12 +364,13 @@ class ImpulseTracer:
         }   
 
     def _handle_exception(self, e: Exception,
-                     trace_output: Dict[str, Any] = None) -> None:
+                     trace_output: Optional[Dict[str, Any]] = None) -> None:
         """
         Throw an error.
         """
-        trace_output["exception"] = f"{e}"
-        trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
+        if trace_output is not None:
+            trace_output["exception"] = f"{e}"
+            trace_output.update(self._get_time("end", trace_output["timestamps"], delta_to="start"))
 
         raise e
 
@@ -410,17 +413,17 @@ if __name__ == "__main__":
             z = 15
 
         @tests_tracer.hook(thread_id="test")
-        async def count(self, n: int) -> AsyncGenerator[str, None]:
+        async def count(self, n):
             for i in range(n):
                 yield str(self.x + i * self.y)
         
         @tests_tracer.hook(thread_id="test")
-        async def cprod(self, n: int) -> str:
+        async def cprod(self, n):
             return str(prod(self.x, self.y, n))
 
 
     @tests_tracer.hook("test_agen")
-    async def count(x: int, y: int, n: int) -> AsyncGenerator[str, None]:
+    async def count(x, y, n):
         for i in range(n):
             yield str(x + i * y)
             if i == 2:
@@ -428,13 +431,13 @@ if __name__ == "__main__":
 
 
     @tests_tracer.hook(thread_id="test")
-    def prod(x: int, y: int, n: int) -> int:
+    def prod(x, y, n):
         return x * n * y
     
     import openai
     CHAT_THREAD = "chatbot"
     @tests_tracer.hook(thread_id = CHAT_THREAD)
-    def llm_respond(input: str, model: str = "gpt-3.5-turbo", temperature: int = 0.1, max_tokens: int = 50):
+    def llm_respond(input, model = "gpt-3.5-turbo", temperature = 0.1, max_tokens = 50):
 
         new_input = {"role": "user", "content": input}
         response = openai.ChatCompletion.create(

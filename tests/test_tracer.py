@@ -8,11 +8,9 @@ import os
 import json
 from pathlib import Path
 from impulse_core.tracer import ImpulseTracer
-from impulse_core.logger import LocalLogger
+from impulse_core.logger import LOCAL_ENTRY_SEP, LocalLogger
 
 ## ROADMAP ####################################################################
-# TODO: Write tests for stack trace logging
-# TODO: Write tests for trace logging
 
 # Fixture setups
 @pytest.fixture
@@ -48,10 +46,9 @@ def tracer(local_logger, tracer_metadata):
 def test_tracer_function(tracer, tracer_metadata):
 
     local_logger = tracer.logger
-    log_target = "test"
     thread_id = "test_fn"
 
-    @tracer.hook(thread_id = thread_id, log_target=log_target)
+    @tracer.hook(thread_id = thread_id)
     def test_fn(x: int, y: int, n: int) -> str:
         return str(x + n * y)
     
@@ -61,17 +58,16 @@ def test_tracer_function(tracer, tracer_metadata):
     payload = test_fn(x, y, n=n)
     tracer.shutdown()
 
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
-        content = f.read()
+        content = f.read().split(LOCAL_ENTRY_SEP)[0]
         logged_data = json.loads(content)
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_id,
+            "thread_id": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_function.<locals>.test_fn"
@@ -80,16 +76,11 @@ def test_tracer_function(tracer, tracer_metadata):
         assert logged_data["payload"]["output"] == payload
         assert type(logged_data["payload"]["call_id"]) == str
         assert logged_data["payload"]["arguments"] == {
-            "args": {
-                "x": x,
-                "y": y,
-            },
-            "kwargs": {
-                "n": n
-            }
+            "x": x,
+            "y": y,
+            "n": n
         }
-        assert logged_data["log_metadata"] is None
-        assert logged_data["log_target"] == log_target
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
 
     os.remove(filepath)
 
@@ -97,7 +88,6 @@ def test_tracer_function(tracer, tracer_metadata):
 def test_tracer_method(tracer, tracer_metadata):
 
     local_logger = tracer.logger
-    log_target = "test"
     thread_id = "test_method"
 
     @dataclass
@@ -105,7 +95,7 @@ def test_tracer_method(tracer, tracer_metadata):
         x: int
         y: int
 
-        @tracer.hook(thread_id, log_target=log_target)
+        @tracer.hook(thread_id)
         def test_fn(self, n: int) -> str:
             return str(self.x + self.y *n)
     
@@ -116,17 +106,16 @@ def test_tracer_method(tracer, tracer_metadata):
     payload = test_instance.test_fn(n)
     tracer.shutdown()
 
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
-        content = f.read()
+        content = f.read().split(LOCAL_ENTRY_SEP)[0]
         logged_data = json.loads(content)
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_id,
+            "thread_id": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_method.<locals>.TestClass.test_fn"
@@ -135,18 +124,17 @@ def test_tracer_method(tracer, tracer_metadata):
         assert logged_data["payload"]["output"] == payload
         assert type(logged_data["payload"]["call_id"]) == str
         assert logged_data["payload"]["arguments"] == {
-            "args": {
-                "self": str(test_instance),
-                "n": n,
+            "self": {
+                "type": "instance",
+                "classname": TestClass.__name__,
+                "attr": {
+                    "x": x,
+                    "y": y
+                }
             },
-            "kwargs": {},
-            "instance_attr": {
-                "x": x,
-                "y": y
-            }
+            "n": n
         }
-        assert logged_data["log_metadata"] is None
-        assert logged_data["log_target"] == log_target
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
 
     os.remove(filepath)
 
@@ -154,7 +142,6 @@ def test_tracer_method(tracer, tracer_metadata):
 def test_tracer_coroutine(tracer, tracer_metadata):
 
     local_logger = tracer.logger
-    log_target = "test"
     thread_id = "test_coro"
 
     try:
@@ -163,7 +150,10 @@ def test_tracer_coroutine(tracer, tracer_metadata):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    @tracer.hook(thread_id, log_target=log_target)
+    local_logger = tracer.logger
+    thread_id = "test_fn"
+
+    @tracer.hook(thread_id = thread_id)
     async def test_fn(x: int, y: int, n: int) -> str:
         return str(x + n * y)
     
@@ -174,17 +164,16 @@ def test_tracer_coroutine(tracer, tracer_metadata):
     tracer.shutdown()
     loop.close()
 
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
-        content = f.read()
+        content = f.read().split(LOCAL_ENTRY_SEP)[0]
         logged_data = json.loads(content)
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_id,
+            "thread_id": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_coroutine.<locals>.test_fn"
@@ -193,24 +182,18 @@ def test_tracer_coroutine(tracer, tracer_metadata):
         assert logged_data["payload"]["output"] == payload
         assert type(logged_data["payload"]["call_id"]) == str
         assert logged_data["payload"]["arguments"] == {
-            "args": {
-                "x": x,
-                "y": y,
-            },
-            "kwargs": {
-                "n": n
-            }
+            "x": x,
+            "y": y,
+            "n": n
         }
-        assert logged_data["log_metadata"] is None
-        assert logged_data["log_target"] == log_target
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
 
     os.remove(filepath)
 
-# Basic async generators
+# # Basic async generators
 def test_tracer_agen(tracer, tracer_metadata):
 
     local_logger = tracer.logger
-    log_target = "test"
     thread_id = "test_agen"
 
     try:
@@ -219,7 +202,7 @@ def test_tracer_agen(tracer, tracer_metadata):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
-    @tracer.hook(thread_id, log_target=log_target)
+    @tracer.hook(thread_id)
     async def test_fn(x: int, y: int, n: int) -> AsyncGenerator[str, None]:
         for i in range(n):
             yield str(x + i * y)
@@ -237,17 +220,16 @@ def test_tracer_agen(tracer, tracer_metadata):
     tracer.shutdown()
     loop.close()
 
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
-        content = f.read()
+        content = f.read().split(LOCAL_ENTRY_SEP)[0]
         logged_data = json.loads(content)
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_id,
+            "thread_id": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_agen.<locals>.test_fn"
@@ -256,70 +238,181 @@ def test_tracer_agen(tracer, tracer_metadata):
         assert logged_data["payload"]["output"] == payload
         assert type(logged_data["payload"]["call_id"]) == str
         assert logged_data["payload"]["arguments"] == {
-            "args": {
-                "x": x,
-                "y": y,
-            },
-            "kwargs": {
-                "n": n
-            }
+            "x": x,
+            "y": y,
+            "n": n
         }
-        assert logged_data["log_metadata"] is None
-        assert logged_data["log_target"] == log_target
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
 
     os.remove(filepath)
 
-# Exceptions
+# Basic exceptions
 def test_tracer_exception(tracer, tracer_metadata):
 
     local_logger = tracer.logger
-    log_target = "test"
-    thread_id = "test_fn_exception"
-    hook_name = "test_hook"
-    exception_message = "Error"
+    thread_id = "test_fn"
+    exception_msg = "Test Exception"
 
-    @tracer.hook(thread_id, log_target=log_target)
+    @tracer.hook(thread_id = thread_id)
     def test_fn(x: int, y: int, n: int) -> str:
-        raise Exception(exception_message)
+        raise Exception(exception_msg)
     
     x = 1
     y = 2
     n = 5
     try:
         payload = test_fn(x, y, n=n)
-    except:
+    except Exception as e:
         pass
     tracer.shutdown()
 
-    assert log_target in local_logger.log_targets
-    filepath = Path(local_logger.uri) / local_logger.log_targets[log_target]
-    
+    filepath = Path(local_logger.filename)
     assert filepath.exists()
+
     with open(filepath, 'r') as f:
-        content = f.read()
+        content = f.read().split(LOCAL_ENTRY_SEP)[0]
         logged_data = json.loads(content)
         
         assert set({
             "tracer_id": tracer.instance_id,
-            "trace_thread": thread_id,
+            "thread_id": thread_id,
             "tracer_metadata": tracer_metadata
         }).issubset(set(logged_data["payload"]["trace_module"]))
         assert logged_data["payload"]["function"]["name"] == "test_tracer_exception.<locals>.test_fn"
         assert logged_data["payload"]["function"]["type"] == "Function"
         assert logged_data["payload"]["function"]["args"] == ["x", "y", "n"]
-        assert logged_data["payload"]["output"] == None
-        assert logged_data["payload"]["exception"] == exception_message
+        assert logged_data["payload"]["status"] == "error"
+        assert logged_data["payload"]["exception"] == exception_msg
         assert type(logged_data["payload"]["call_id"]) == str
         assert logged_data["payload"]["arguments"] == {
-            "args": {
-                "x": x,
-                "y": y,
-            },
-            "kwargs": {
-                "n": n
-            }
+            "x": x,
+            "y": y,
+            "n": n
         }
-        assert logged_data["log_metadata"] is None
-        assert logged_data["log_target"] == log_target
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
 
+    os.remove(filepath)
+
+# Stack trace
+def test_tracer_stack_trace(tracer, tracer_metadata):
+
+    local_logger = tracer.logger
+    thread_id = "test_fn"
+
+    @tracer.hook(thread_id = thread_id)
+    def test_fn(x: int, y: int, n: int) -> str:
+        return str(x + n * y)
+    
+    def test_fn_1(x: int, y: int, n: int) -> str:
+        return test_fn(x, y, n=n)
+
+    @tracer.hook(thread_id = thread_id)
+    def test_fn_2(x: int, y: int, n: int) -> str:
+        return test_fn_1(x, y, n=n)
+
+    x = 1
+    y = 2
+    n = 5
+    payload = test_fn_2(x, y, n=n)
+    tracer.shutdown()
+
+    filepath = Path(local_logger.filename)
+    assert filepath.exists()
+
+    with open(filepath, 'r') as f:
+        content = f.read().split(LOCAL_ENTRY_SEP)[1]
+        logged_data = json.loads(content)
+        
+        assert set({
+            "tracer_id": tracer.instance_id,
+            "thread_id": thread_id,
+            "tracer_metadata": tracer_metadata
+        }).issubset(set(logged_data["payload"]["trace_module"]))
+        assert logged_data["payload"]["function"]["name"] == "test_tracer_stack_trace.<locals>.test_fn_2"
+        assert logged_data["payload"]["function"]["type"] == "Function"
+        assert logged_data["payload"]["function"]["args"] == ["x", "y", "n"]
+        assert logged_data["payload"]["output"] == payload
+        assert type(logged_data["payload"]["call_id"]) == str
+        assert logged_data["payload"]["arguments"] == {
+            "x": x,
+            "y": y,
+            "n": n
+        }
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
+        assert len(logged_data["payload"]["stack_trace"]["parents"]) == 1
+        assert len(logged_data["payload"]["stack_trace"]["children"]) == 1
+        assert logged_data["payload"]["stack_trace"]["parents"][0]["fn_name"] == "<module>"
+        assert logged_data["payload"]["stack_trace"]["children"][0]["fn_name"] == "test_tracer_stack_trace.<locals>.test_fn"
+
+    os.remove(filepath)
+
+# Stack trace with exceptions
+def test_tracer_stack_trace_exception(tracer, tracer_metadata):
+
+    local_logger = tracer.logger
+    thread_id = "test_fn"
+    exception_msg = "Test Exception"
+
+    @tracer.hook(thread_id = thread_id)
+    def test_fn(x: int, y: int, n: int) -> str:
+        return str(x + n * y)
+    
+    def test_fn_1(x: int, y: int, n: int) -> str:
+        raise Exception("Test Exception")
+
+    @tracer.hook(thread_id = thread_id)
+    def test_fn_2(x: int, y: int, n: int) -> str:
+        return test_fn_1(x, y, n=n)
+
+    x = 1
+    y = 2
+    n = 5
+
+    try:
+        payload = test_fn_2(x, y, n=n)
+    except:
+        pass
+
+    payload_2 = test_fn(x, y, n=n)
+    tracer.shutdown()
+
+    filepath = Path(local_logger.filename)
+    assert filepath.exists()
+
+    with open(filepath, 'r') as f:
+        content = f.read().split(LOCAL_ENTRY_SEP)
+        logged_data = json.loads(content[0])
+        logged_data_2 = json.loads(content[1])
+        
+        assert set({
+            "tracer_id": tracer.instance_id,
+            "thread_id": thread_id,
+            "tracer_metadata": tracer_metadata
+        }).issubset(set(logged_data["payload"]["trace_module"]))
+        assert logged_data["payload"]["function"]["name"] == "test_tracer_stack_trace_exception.<locals>.test_fn_2"
+        assert logged_data["payload"]["function"]["type"] == "Function"
+        assert logged_data["payload"]["function"]["args"] == ["x", "y", "n"]
+        assert type(logged_data["payload"]["call_id"]) == str
+        assert logged_data["payload"]["arguments"] == {
+            "x": x,
+            "y": y,
+            "n": n
+        }
+        assert logged_data["payload"]["status"] == "error"
+        assert logged_data["payload"]["exception"] == exception_msg
+        assert logged_data["log_metadata"] == {"source": "impulse_tracer"}
+        assert len(logged_data["payload"]["stack_trace"]["parents"]) == 1
+        assert len(logged_data["payload"]["stack_trace"]["children"]) == 0
+        assert logged_data["payload"]["stack_trace"]["parents"][0]["fn_name"] == "<module>"
+
+        assert logged_data_2["payload"]["function"]["name"] == "test_tracer_stack_trace_exception.<locals>.test_fn"
+        assert logged_data_2["payload"]["function"]["type"] == "Function"
+        assert logged_data_2["payload"]["function"]["args"] == ["x", "y", "n"]
+        assert logged_data_2["payload"]["status"] == "success"
+        assert logged_data_2["payload"]["output"] == payload_2
+
+        assert len(logged_data_2["payload"]["stack_trace"]["parents"]) == 1
+        assert len(logged_data_2["payload"]["stack_trace"]["children"]) == 0
+        assert logged_data_2["payload"]["stack_trace"]["parents"][0]["fn_name"] == "<module>"
+        
     os.remove(filepath)
