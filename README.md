@@ -59,8 +59,8 @@ The record will capture information (under the `"payload"` field of the json rec
 
 Each record is uniquely identified by 4 fields:
  - A `call` is every single run of the `traced function`, identified by a `call_id` field in the logs. Each `call` also defines a `trace_log()` context. (see below)
- - A `hook` is a decorator for a specific function, identified by `hook_id`. Functions with hooks are called `traced function`.
- - A `thread` is a collection of `hook`'s, identified by the `thread_id` argument while specifying the `hook`
+ - A `hook` is a decorator for a specific function, identified by `hook_id` argument in the `@tracer.hook()` function. 
+ - A `thread` is a collection of `hook`'s, identified by the `thread_id` argument in the `@tracer.hook()` function. 
  - A `module` is an instance of the `ImpulseTracer` class, identified by the `instance_id` attribute and manages a collection of `threads`
  
 This works with functions, methods, classmethods, staticmethods, coroutines, and async generators. If an exception occurs, logging will still happen. 
