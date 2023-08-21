@@ -29,11 +29,11 @@ some_function(1)
 tracer.shutdown() ## needed for local logger to flush the write buffer
 ```
 The record will capture information (under the `"payload"` field of the json record) during the call:
-```json
+```javascript
 {
     "function": {
         "name" : "some_function"
-        // ...
+        ...
     },
     "call_id": "asfda2323-52sdfasd",
     "timestamps": {
@@ -47,7 +47,7 @@ The record will capture information (under the `"payload"` field of the json rec
     },
     "status": "success",
     "output": "1 - 2"
-    // ...
+    ...
 }
 ```
 
@@ -66,49 +66,49 @@ def intermediate():
 
 The log records will preserve the parent-child relationship between `some_function(x,y)` and `top_level()` in the `stack_trace` field. For instance, this will be captured in the `top_level()`'s record:
 
-```json
+```javascript
 {
     "function": {
         "name" : "top_level",
-        // ...
+        ...
     },
     "call_id": "asdfasdf-2352dsafsa",
-    // ...
+    ...
     "stack_trace": {
         "parents": [
-            // ...
+            ...
         ],
         "children": [
             {
                 "fn_name": "some_function",
                 "call_id": "asfda2323-52sdfasd" ,
                 "trace_module": {
-                    // ...
+                    ...
                 }
             }
         ]
     }
-    // ...
+    ...
 }
 {
     "function": {
         "name" : "some_function",
-        // ...
+        ...
     },
     "call_id": "asfda2323-52sdfasd",
-    // ...
+    ...
     "stack_trace": {
         "parents": [
             {
                 "fn_name": "top_level",
                 "call_id": "asdfasdf-2352dsafsa",
                 "trace_module": {
-                    // ...
+                    ...
                 }
             }
         ],
         "children": [
-            // ...
+            ...
         ]
     }
 
@@ -130,19 +130,19 @@ def some_function(x: int, y: str = 2) -> str:
 
 These can be accessed in the `"trace_log"` field of the record.
 
-```json
+```javascript
 {
     "function": {
         "name" : "some_function"
-        // ...
+        ...
     },
-    // ...
+    ...
     "trace_log": [
         {
             "timestamp": "2023-08-20 22:05:55.000511",
             "payload": "The ents shall march to"
         },
-        // ...
+        ...
     ]
 }
 ```
