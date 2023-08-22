@@ -10,7 +10,7 @@ from utils import mdb
 st.set_page_config(layout="wide", page_title="Impulse", page_icon = "assets/images/favicon.png")
 app = st.container()
 
-URI = "mongodb://root:example@localhost:27017/"
+URI = "mongodb://root:example@mongo:27017/"
 DATABASE = "impulse"
 mdb_client = mdb.get_mdb_client(URI)
 db = mdb_client[DATABASE]
@@ -71,7 +71,7 @@ def gen_tree(root: Dict[str, Any], fns: List[Dict[str, Any]]):
 with app:
 
     st.title('Impulse')
-    st.markdown(":red[WARNING: I threw this together asap for data exploration. This is very buggy and rudimentary. Feel free to file bugs / ask for features / contribute!]")
+    st.markdown(":red[WARNING: I threw this together haphazardly for simple exploration. This is very rudimentary. Feel free to file bugs / ask for features / contribute!]")
 
     ## Add a sidebar
     with st.sidebar:
@@ -147,11 +147,15 @@ with app:
                     chosen_node = root
                 else:
                     chosen_node = json.loads(chosen_node)
-            
-                if st.button("Anchor"):
+
+                col1, col2 = st.columns([1, 1])
+                if col1.button("Anchor"):
                     method_name = chosen_node["function"]["name"]
                     set_session_var("anchor", method_name)
                     set_session_var("anchored", True)
+                if col2.button("Reset"):
+                    set_session_var("anchor", None)
+                    set_session_var("anchored", False)
 
             "---"
     

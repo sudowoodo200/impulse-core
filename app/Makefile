@@ -1,4 +1,4 @@
-all: start_database config_venv install_requirements install_impulse
+all: start_database config_venv install_requirements install_impulse streamlit
 
 start_database: ./database/mongo.yml
 	@echo "Starting database..."
@@ -17,6 +17,11 @@ install_requirements: requirements.txt
 install_impulse: ../impulse_core/* ../pyproject.toml
 	@. ../.venv/bin/activate; \
 		cd .. && pip install --no-cache-dir --force-reinstall .;
+	
+streamlit: app.py
+	@echo "Starting streamlit..."
+	@. ../.venv/bin/activate; \
+		streamlit run app.py
 
 shutdown: ./database/mongo.yml
 	@echo "Shutting down database..."
