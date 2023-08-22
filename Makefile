@@ -2,6 +2,10 @@ app: app/* pyproject.toml
 	@echo "Building tutorial..."
 	@cd app && make start
 
+database: app/* pyproject.toml
+	@echo "Building database..."
+	@cd app && make database
+
 shutdown:
 	@echo "Shutting down tutorial assets..."
 	@cd app && make shutdown

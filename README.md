@@ -164,17 +164,22 @@ These can be accessed in the `"trace_log"` field of the record.
 
 Common use cases include capturing session data when serving web requests and doing more granular logging of function components.
 
-### Tutorial
+### App
 
-Apologies for the lack of docs for now. Still drafting it. In its place, a quick tutorial can be found at [tutorial/tutorial.ipynb](./tutorial/tutorial.ipynb). To get started, use the following to boot up a virtual env with a local mongo-db instance.
+Apologies for the lack of docs for now. Still drafting it. In its place, a quick tutorial can be found at [app/tutorial/tutorial.ipynb](./app/tutorial/tutorial.ipynb). To get started, use the following to boot up a local instance of a database and a (very rough) exploration app in Streamlit
 
 ```bash
-make tutorial
+make app
 ```
 
-After you are done, clean up the tutorial assets with
+You can also only boot up the database without the Streamlit app.
 ```bash
-make shutdown-tutorial
+make database
+```
+
+After you are done, clean up the assets with
+```bash
+make shutdown
 ```
 
 ## Logging Schema
