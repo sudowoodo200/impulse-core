@@ -5,6 +5,7 @@ description = ""
 authors = ["sudowoodo200 <sudowoodo200@gmail.com>"]
 readme = "README.md"
 repository = "https://github.com/sudowoodo200/impulse-core/"
+exclude = ["app/*", "tests/*"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -27,6 +28,3 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.2"
-
-[tool.poetry.package]
-exclude = ["app/*", "tests/*"]
