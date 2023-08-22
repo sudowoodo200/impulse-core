@@ -1,12 +1,10 @@
-app: app/tutorial/* pyproject.toml
+app: app/* pyproject.toml
 	@echo "Building tutorial..."
-	@cd app && make 
+	@cd app && make start
 
 shutdown:
 	@echo "Shutting down tutorial assets..."
 	@cd app && make shutdown
-	@rm -rf .venv
-	@rm -rf tutorial/.locallogs
 
 test:
 	@echo "Running tests..."

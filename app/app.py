@@ -31,9 +31,8 @@ def init_session_var(name: str, value: Any = True):
         st.session_state[name] = value
 
 def read_node(node: Dict[str, Any]):
-
-            output = node["payload"]
-            return output
+    output = node["payload"]
+    return output
 
 def get_by_call_id(fns:List[Dict[str, Any]], call_id: str) -> Dict[str, Any]:
     for fn in fns:
@@ -103,12 +102,6 @@ with app:
             old_sessions = sessions
             session = st.selectbox("Select a session", options=sessions)
 
-            # idx = sessions.index(session)
-            # n = len(sessions)
-            # col1, col2 = st.columns([1, 1])
-            # col2.button("Previous", on_click= lambda: set_session_var("session_idx", (idx - 1) % n))
-            # col1.button("Next", on_click= lambda: set_session_var("session_idx", (idx + 1) % n))
-
             fns = collection.find({"payload.trace_module.session_id": session,
                                     "payload.trace_module.thread_id": thread},
                                     projection={"payload": 1, "_id": 0})
@@ -139,7 +132,7 @@ with app:
             # Display
             chosen_node = st_ant_tree(treeData=tree, allowClear= True, bordered= True, filterTreeNode= True, 
                             multiple= False, placeholder= "Select Trace Node", showArrow= True, showSearch= False, treeCheckable= False, 
-                            width_dropdown= "100%", disabled= get_session_var("anchored"))
+                            width_dropdown= "100%", disabled= get_session_var("anchored"),max_height=100)
             
             if chosen_node is not None:
 
@@ -179,13 +172,13 @@ with app:
 
             with col1:
                 if "arguments" in chosen_node:
-                    st.text_area("Input", value=json.dumps(chosen_node["arguments"], indent=4), height=400)
+                    st.text_area("Input", value=json.dumps(chosen_node["arguments"], indent=4), height=300)
 
             with col2:
                 if chosen_node["status"] == "success":
-                    st.text_area("Output", value=json.dumps(chosen_node["output"], indent=4), height=400)
+                    st.text_area("Output", value=json.dumps(chosen_node["output"], indent=4), height=300)
                 else:
-                    st.text_area("Output", value=json.dumps(chosen_node["exception"], indent=4), height=400)
+                    st.text_area("Output", value=json.dumps(chosen_node["exception"], indent=4), height=300)
 
             "---"
             
