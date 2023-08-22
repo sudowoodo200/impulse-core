@@ -5,14 +5,16 @@ from datetime import datetime
 class TracedFunctionSchema(BaseModel):
     type: str
     name: str
-    args: List[str]
+    args: Optional[List[str]] = None
 
 class TraceModuleSchema(BaseModel):
     tracer_id: str
-    tracer_metadata: Dict[str, Any]
+    session_id: str
     thread_id: str
     hook_id: str
-    hook_metadata: Dict[str, Any]
+    tracer_metadata: Dict[str, Any]
+    session_metadata: Optional[Dict[str, Any]] = None
+    hook_metadata: Optional[Dict[str, Any]] = None
 
 class FunctionTimestampsSchema(BaseModel):
     start: datetime
@@ -43,6 +45,7 @@ class TraceSchema(BaseModel):
     output: Optional[Any] = None
     stack_trace: Optional[StackTraceSchema] = None
     trace_logs: Optional[List[TraceLogSchema]] = None
+    feedback: Optional[Dict[str, Any]] = None
 
 
 EMPTY_TRACE_TEMPLATE = {
@@ -51,15 +54,7 @@ EMPTY_TRACE_TEMPLATE = {
         "name": "",
         "args": []
     },
-    "trace_module": {
-        "tracer_id": "",
-        "tracer_metadata": {
-            "tracing_context": ""
-        },
-        "thread_id": "",
-        "hook_id": "",
-        "hook_metadata": {}
-    },
+    "trace_module": {},
     "call_id": "",
     "timestamps": {
         "start": "",
