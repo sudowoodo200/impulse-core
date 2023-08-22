@@ -45,6 +45,7 @@ class TraceSchema(BaseModel):
     output: Optional[Any] = None
     stack_trace: Optional[StackTraceSchema] = None
     trace_logs: Optional[List[TraceLogSchema]] = None
+    feedback: Optional[Dict[str, Any]] = None
 
 
 EMPTY_TRACE_TEMPLATE = {

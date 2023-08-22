@@ -17,3 +17,7 @@ install_requirements: requirements.txt
 install_impulse: ../impulse_core/* ../pyproject.toml
 	@. ../.venv/bin/activate; \
 		cd .. && pip install --no-cache-dir --force-reinstall .;
+
+shutdown: ./database/mongo.yml
+	@echo "Shutting down database..."
+	@docker-compose -f ./database/mongo.yml down

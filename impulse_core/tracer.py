@@ -114,9 +114,15 @@ class ImpulseTracer:
 
     logger: BaseAsyncLogger = field(default_factory=LocalLogger)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    instance_id: str = "impulse_module_"+str(uuid.uuid4())[:8]
-    session_id: str = "run_"+datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+    instance_id: Optional[str] = None
+    session_id: Optional[str] = None
     session_metadata: Optional[Dict[str, Any]] = None
+
+    def __post_init__(self):
+        if self.instance_id is None:
+            self.instance_id = "impulse_module_"+str(uuid.uuid4())[:8]
+        if self.session_id is None:
+            self.session_id = "run_" + datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
     def set_session_id(self, session_id: str, session_metadata: Optional[Dict[str, Any]] = None) -> None:
         """
