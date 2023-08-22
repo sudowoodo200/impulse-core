@@ -71,6 +71,7 @@ def gen_tree(root: Dict[str, Any], fns: List[Dict[str, Any]]):
 with app:
 
     st.title('Impulse')
+    st.markdown(":red[WARNING: I threw this together asap for data exploration. This is very buggy and rudimentary. Feel free to file bugs / ask for features / contribute!]")
 
     ## Add a sidebar
     with st.sidebar:
