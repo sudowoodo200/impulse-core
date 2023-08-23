@@ -1,14 +1,14 @@
-app: app/* pyproject.toml
-	@echo "Building tutorial..."
-	@cd app && make start
+app: app/* docker-compose.yml pyproject.toml
+	@echo "Building app..."
+	@docker-compose up
 
-database: app/* pyproject.toml
+database: docker-compose.yml pyproject.toml
 	@echo "Building database..."
-	@cd app && make database
+	@docker-compose up -d mongo mongo-express
 
 shutdown:
-	@echo "Shutting down tutorial assets..."
-	@cd app && make shutdown
+	@echo "Shutting down application assets..."
+	@docker-compose down
 
 test:
 	@echo "Running tests..."
@@ -25,5 +25,5 @@ install: impulse_core/* pyproject.toml
 clean:
 	@ echo "Cleaning up..."
 	@ rm -rf .venv dist .mypy_cache .pytest_cache impulse_core/__pycache__ 
-	@ rm -rf app/database/.mdblogs app/.web
+	@ rm -rf app/.web
 	@ rm -rf .impulselogs

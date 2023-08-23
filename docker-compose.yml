@@ -11,7 +11,7 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
-      - ./database/.mdblogs:/data/db
+      - ~/.impulse_core/db:/data/db
 
   mongo-express:
     image: mongo-express
@@ -27,7 +27,7 @@ services:
     image: python:3.9-slim
     volumes:
       - ..:/impulse
-      - .:/app
+      - ./app:/app
     ports:
       - 8501:8501
     working_dir: /app
