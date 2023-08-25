@@ -1,7 +1,0 @@
-openai
-pandas
-matplotlib
-streamlit
-extra_streamlit_components
-st_ant_tree
-pymongo

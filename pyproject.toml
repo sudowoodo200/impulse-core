@@ -28,3 +28,6 @@ optional = true
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.2"
+
+[tool.poetry.scripts]
+impulse-server = "impulse_core.__main__:run_app"

@@ -25,5 +25,5 @@ install: impulse_core/* pyproject.toml
 clean:
 	@ echo "Cleaning up..."
 	@ rm -rf .venv dist .mypy_cache .pytest_cache impulse_core/__pycache__ 
-	@ rm -rf app/.web
+	@ rm -rf app/.next app/node_modules
 	@ rm -rf .impulselogs
