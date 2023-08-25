@@ -22,14 +22,3 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
-  
-  myservice:
-    image: python:3.9-slim
-    volumes:
-      - ..:/impulse
-      - ./app:/app
-    ports:
-      - 8501:8501
-    working_dir: /app
-    command: /bin/bash -c "pip install -r requirements.txt && streamlit run app.py && cd /impulse && pip install --no-cache-dir --force-reinstall ."
-  
