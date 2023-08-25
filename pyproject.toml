@@ -30,4 +30,4 @@ optional = true
 mkdocs = "^1.5.2"
 
 [tool.poetry.scripts]
-impulse-server = "impulse_core.__main__:run_app"
+impulse-server = "impulse_core.__main__:main"
