@@ -156,6 +156,7 @@ class ImpulseTracer:
 
             IS_COROUTINE = inspect.iscoroutinefunction(func) 
             IS_ASYNCGEN = inspect.isasyncgenfunction(func) 
+            IS_GENERATOR = inspect.isgeneratorfunction(func)
 
             trace_output: dict = {}
             trace_output["function"] = {
@@ -252,6 +253,37 @@ class ImpulseTracer:
                     trace_complete(new_root)
 
             @ft.wraps(func)
+            def gen_wrapper(*args, **kwargs):
+                """
+                Synchronous generator wrapper.
+                """
+                new_root = trace_init(*args, **kwargs)
+
+                try:
+                    output = []
+                    with impulse_trace_context(new_root):
+                        for chunk in func(*args, **kwargs):
+                            yield chunk
+                            output.append(chunk)
+                    
+                    if all([isinstance(output[i], str) for i in range(len(output))]):
+                        output = "".join(output)
+                    
+                    if output_postprocess is not None:
+                        output = output_postprocess(output)
+
+                    trace_output["status"] = "success"
+                    trace_output["output"] = self._parse_item(output)
+
+                except Exception as e:
+                    trace_output["status"] = "error"
+                    trace_output["output"] = output
+                    self._handle_exception(e, trace_output)
+                
+                finally:
+                    trace_complete(new_root)
+
+            @ft.wraps(func)
             def wrapper(*args, **kwargs):
                 """
                 Synchronous function call wrappers.
@@ -282,6 +314,8 @@ class ImpulseTracer:
                 return coro_wrapper
             elif IS_ASYNCGEN:
                 return agen_wrapper
+            elif IS_GENERATOR:
+                return gen_wrapper
             else:
                 return wrapper
             
