@@ -24,7 +24,7 @@ def start():
                 for chunk in response.iter_content(chunk_size=8192):
                     output_file.write(chunk)
     
-    ## download app from npm
+    ## Spin up frontend
     ## TODO
 
     ## start docker-compose
