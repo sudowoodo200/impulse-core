@@ -19,11 +19,15 @@ class ImpulseTraceNode:
     name: str
     call_id: str
     trace_module: Optional[Dict[str, Any]]
-    creation_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    creation_time: Optional[str] = None
     parents: List[ImpulseTraceNode] = field(default_factory=list)
     children: List[ImpulseTraceNode] = field(default_factory=list)
     trace_logs: List[Dict[str, Any]] = field(default_factory=list)
     diff_process: bool = False
+
+    def __post_init__(self):
+        if self.creation_time is None:
+            self.creation_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def add_child(self, child_node: ImpulseTraceNode):
         self.children.append(child_node)
@@ -114,13 +118,11 @@ class ImpulseTracer:
 
     logger: BaseAsyncLogger = field(default_factory=LocalLogger)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    instance_id: Optional[str] = None
+    instance_id: Optional[str] = "impulse_default"
     session_id: Optional[str] = None
     session_metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
-        if self.instance_id is None:
-            self.instance_id = "impulse_module_"+str(uuid.uuid4())[:8]
         if self.session_id is None:
             self.session_id = "run_" + datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
@@ -130,6 +132,31 @@ class ImpulseTracer:
         """
         self.session_id = session_id
         self.session_metadata = session_metadata
+
+    def class_hook(self,
+                   thread_id: str = "default",
+                   attr_names: List[str] = ["__call__"],
+                   hook_metadata: Dict[str, Any] = {},
+                   output_postprocess: Optional[Callable] = None):
+        """
+        Decorator for logging classes. 
+        Uses self.hook() on each of the specified class attributes
+        """
+
+        def decorator(cls: type) -> type:
+
+            # Assert that cls is a Class
+            assert inspect.isclass(cls), "Not a class"
+
+            attrs = cls.__dict__
+            for name in attr_names:
+                setattr(cls, name, self.hook(thread_id = thread_id,
+                                        hook_metadata=hook_metadata,
+                                        output_postprocess=output_postprocess)(attrs[name]))
+
+            return cls
+        
+        return decorator
 
     def hook(self,
             thread_id: str = "default", 
@@ -156,10 +183,11 @@ class ImpulseTracer:
 
             IS_COROUTINE = inspect.iscoroutinefunction(func) 
             IS_ASYNCGEN = inspect.isasyncgenfunction(func) 
+            IS_GENERATOR = inspect.isgeneratorfunction(func)
 
             trace_output: dict = {}
             trace_output["function"] = {
-                "type": "Coroutine" if IS_COROUTINE else "AsyncGenerator" if IS_ASYNCGEN else "Function",
+                "type": "Coroutine" if IS_COROUTINE else "AsyncGenerator" if IS_ASYNCGEN else "Generator" if IS_GENERATOR else "Function",
                 "name": f_name,
                 "args" : f_args
             }
@@ -252,6 +280,37 @@ class ImpulseTracer:
                     trace_complete(new_root)
 
             @ft.wraps(func)
+            def gen_wrapper(*args, **kwargs):
+                """
+                Synchronous generator wrapper.
+                """
+                new_root = trace_init(*args, **kwargs)
+
+                try:
+                    output = []
+                    with impulse_trace_context(new_root):
+                        for chunk in func(*args, **kwargs):
+                            yield chunk
+                            output.append(chunk)
+                    
+                    if all([isinstance(output[i], str) for i in range(len(output))]):
+                        output = "".join(output)
+                    
+                    if output_postprocess is not None:
+                        output = output_postprocess(output)
+
+                    trace_output["status"] = "success"
+                    trace_output["output"] = self._parse_item(output)
+
+                except Exception as e:
+                    trace_output["status"] = "error"
+                    trace_output["output"] = output
+                    self._handle_exception(e, trace_output)
+                
+                finally:
+                    trace_complete(new_root)
+
+            @ft.wraps(func)
             def wrapper(*args, **kwargs):
                 """
                 Synchronous function call wrappers.
@@ -282,6 +341,8 @@ class ImpulseTracer:
                 return coro_wrapper
             elif IS_ASYNCGEN:
                 return agen_wrapper
+            elif IS_GENERATOR:
+                return gen_wrapper
             else:
                 return wrapper
             
