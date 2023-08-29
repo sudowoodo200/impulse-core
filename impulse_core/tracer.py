@@ -150,12 +150,9 @@ class ImpulseTracer:
 
             attrs = cls.__dict__
             for name in attr_names:
-                cls.__setattr__(
-                    __name = name,
-                    __value = self.hook(thread_id = thread_id,
+                setattr(cls, name, self.hook(thread_id = thread_id,
                                         hook_metadata=hook_metadata,
-                                        output_postprocess=output_postprocess)(attrs[name])
-                )
+                                        output_postprocess=output_postprocess)(attrs[name]))
 
             return cls
         
