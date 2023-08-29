@@ -19,11 +19,15 @@ class ImpulseTraceNode:
     name: str
     call_id: str
     trace_module: Optional[Dict[str, Any]]
-    creation_time: str = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    creation_time: Optional[str] = None
     parents: List[ImpulseTraceNode] = field(default_factory=list)
     children: List[ImpulseTraceNode] = field(default_factory=list)
     trace_logs: List[Dict[str, Any]] = field(default_factory=list)
     diff_process: bool = False
+
+    def __post_init__(self):
+        if self.creation_time is None:
+            self.creation_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def add_child(self, child_node: ImpulseTraceNode):
         self.children.append(child_node)
@@ -114,13 +118,11 @@ class ImpulseTracer:
 
     logger: BaseAsyncLogger = field(default_factory=LocalLogger)
     metadata: Dict[str, Any] = field(default_factory=dict)
-    instance_id: Optional[str] = None
+    instance_id: Optional[str] = "impulse_default"
     session_id: Optional[str] = None
     session_metadata: Optional[Dict[str, Any]] = None
 
     def __post_init__(self):
-        if self.instance_id is None:
-            self.instance_id = "impulse_module_"+str(uuid.uuid4())[:8]
         if self.session_id is None:
             self.session_id = "run_" + datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 

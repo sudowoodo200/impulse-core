@@ -12,6 +12,7 @@ python = "^3.9"
 pydantic = "^1.10.5"
 pymongo = "^4.3.3"
 typing-extensions = "^4.7.1"
+schedule = "^1.2.0"
 
 [build-system]
 requires = ["poetry-core"]
