@@ -190,7 +190,7 @@ class ImpulseTracer:
 
             trace_output: dict = {}
             trace_output["function"] = {
-                "type": "Coroutine" if IS_COROUTINE else "AsyncGenerator" if IS_ASYNCGEN else "Function",
+                "type": "Coroutine" if IS_COROUTINE else "AsyncGenerator" if IS_ASYNCGEN else "Generator" if IS_GENERATOR else "Function",
                 "name": f_name,
                 "args" : f_args
             }
