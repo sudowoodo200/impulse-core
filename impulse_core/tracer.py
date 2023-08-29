@@ -133,6 +133,34 @@ class ImpulseTracer:
         self.session_id = session_id
         self.session_metadata = session_metadata
 
+    def class_hook(self,
+                   thread_id: str = "default",
+                   attr_names: List[str] = ["__call__"],
+                   hook_metadata: Dict[str, Any] = {},
+                   output_postprocess: Optional[Callable] = None):
+        """
+        Decorator for logging classes. 
+        Uses self.hook() on each of the specified class attributes
+        """
+
+        def decorator(cls: type) -> type:
+
+            # Assert that cls is a Class
+            assert inspect.isclass(cls), "Not a class"
+
+            attrs = cls.__dict__
+            for name in attr_names:
+                cls.__setattr__(
+                    __name = name,
+                    __value = self.hook(thread_id = thread_id,
+                                        hook_metadata=hook_metadata,
+                                        output_postprocess=output_postprocess)(attrs[name])
+                )
+
+            return cls
+        
+        return decorator
+
     def hook(self,
             thread_id: str = "default", 
             hook_id: Optional[str] = None,
